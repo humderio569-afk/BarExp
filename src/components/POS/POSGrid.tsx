@@ -1,0 +1,685 @@
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useBar } from '../../context/BarContext';
+import { Category, Product } from '../../types';
+import { renderCategoryIcon } from '../Stock/CategoryManagerModal';
+import { FlavorSelectionModal } from './FlavorSelectionModal';
+import { QuickQuantityModal } from './QuickQuantityModal';
+import { 
+  POSDisplaySettingsModal, 
+  POSDisplayPreferences, 
+  DEFAULT_DISPLAY_PREFERENCES 
+} from './POSDisplaySettingsModal';
+import { 
+  Search, 
+  Package, 
+  Plus, 
+  Minus,
+  Check, 
+  AlertCircle, 
+  Image as ImageIcon, 
+  Sparkles, 
+  X,
+  SlidersHorizontal,
+  Calculator
+} from 'lucide-react';
+import { safeGetItem, safeSetItem } from '../../utils/storage';
+
+const DISPLAY_PREFS_STORAGE_KEY = 'barexpress_pos_display_prefs_v1';
+
+export const POSGrid: React.FC = () => {
+  const {
+    products,
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    searchQuery,
+    setSearchQuery,
+    addToCart,
+    removeFromCart,
+    cart,
+    settings,
+  } = useBar();
+
+  const [flavorProductModal, setFlavorProductModal] = useState<Product | null>(null);
+  const [quickQuantityProductModal, setQuickQuantityProductModal] = useState<Product | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isDisplaySettingsOpen, setIsDisplaySettingsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Load / Save Display Preferences
+  const [displayPrefs, setDisplayPrefs] = useState<POSDisplayPreferences>(() => {
+    try {
+      const saved = safeGetItem(DISPLAY_PREFS_STORAGE_KEY);
+      if (saved) {
+        return { ...DEFAULT_DISPLAY_PREFERENCES, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.warn('Error reading POS display preferences:', e);
+    }
+    return DEFAULT_DISPLAY_PREFERENCES;
+  });
+
+  const handleUpdateDisplayPrefs = (updated: POSDisplayPreferences) => {
+    setDisplayPrefs(updated);
+    safeSetItem(DISPLAY_PREFS_STORAGE_KEY, JSON.stringify(updated));
+  };
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  const handleProductClick = (product: Product) => {
+    if (product.stock <= 0) return;
+    if (product.flavors && product.flavors.length > 0) {
+      setFlavorProductModal(product);
+    } else {
+      addToCart(product);
+    }
+  };
+
+  // Filter products by active category & search query
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesCategory = selectedCategory === 'Tous' || product.category === selectedCategory;
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (product.barcode && product.barcode.includes(searchQuery));
+      return matchesCategory && matchesSearch && product.active;
+    });
+  }, [products, selectedCategory, searchQuery]);
+
+  // Get quantity of a product currently in the cart
+  const getCartQuantity = (productId: string) => {
+    const item = cart.find(i => i.product.id === productId);
+    return item ? item.quantity : 0;
+  };
+
+  // Compute Grid Columns CSS class dynamically
+  const gridColumnsClass = useMemo(() => {
+    const { viewMode, columns } = displayPrefs;
+    if (viewMode === 'list') return 'flex flex-col space-y-2';
+
+    if (viewMode === 'simple_icon') {
+      switch (columns) {
+        case '2': return 'grid grid-cols-2 gap-2 sm:gap-2.5';
+        case '3': return 'grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5';
+        case '4': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-2.5';
+        case '5': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-2.5';
+        case '6': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-2.5';
+        case '8': return 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-2.5';
+        case 'auto':
+        default:
+          return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 sm:gap-2.5';
+      }
+    }
+
+    // Default 'cards' view mode
+    switch (columns) {
+      case '2': return 'grid grid-cols-2 gap-3 sm:gap-3.5';
+      case '3': return 'grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-3.5';
+      case '4': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-3.5';
+      case '5': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-3.5';
+      case '6': return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-3.5';
+      case '8': return 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-3.5';
+      case 'auto':
+      default:
+        return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-3.5';
+    }
+  }, [displayPrefs]);
+
+  // Card photo container dimensions based on card size preference
+  const cardPhotoClass = useMemo(() => {
+    switch (displayPrefs.cardSize) {
+      case 'small':
+        return 'aspect-[1/1] sm:aspect-[4/4] min-h-[120px] sm:min-h-[140px]';
+      case 'large':
+        return 'aspect-[3/4] min-h-[220px] sm:min-h-[270px]';
+      case 'medium':
+      default:
+        return 'aspect-[4/5] min-h-[185px] sm:min-h-[225px]';
+    }
+  }, [displayPrefs.cardSize]);
+
+  return (
+    <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-hidden">
+      
+      {/* Top Single-Line Header: Loupe + Horizontal Category Chips + Display Modes Toolbar */}
+      <div className="px-2 sm:px-3 py-2 bg-white border-b border-slate-200 flex items-center gap-1.5 sm:gap-2 shrink-0 shadow-2xs">
+        
+        {/* Loupe / Search Toggle Button & Inline Expandable Search */}
+        {isSearchOpen ? (
+          <div className="flex items-center bg-slate-100 border border-amber-500 rounded-xl px-2 py-1 w-40 sm:w-56 shrink-0 shadow-inner">
+            <Search className="w-3.5 h-3.5 text-amber-600 shrink-0 mr-1.5" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher..."
+              className="w-full bg-transparent text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none"
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                title="Effacer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                title="Fermer la recherche"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className={`p-2 rounded-xl text-xs font-bold transition shrink-0 flex items-center justify-center cursor-pointer border ${
+              searchQuery
+                ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+            }`}
+            title="Rechercher un produit"
+          >
+            <Search className="w-4 h-4" />
+            {searchQuery && (
+              <span className="ml-1 text-[10px] max-w-[60px] truncate hidden sm:inline">
+                {searchQuery}
+              </span>
+            )}
+          </button>
+        )}
+
+        {/* Single Line Horizontal Scrollable Category Chips */}
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap scrollbar-none py-0.5 scroll-smooth">
+          <button
+            onClick={() => setSelectedCategory('Tous')}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-xs cursor-pointer shrink-0 ${
+              selectedCategory === 'Tous'
+                ? 'bg-amber-500 text-slate-950 shadow-amber-500/20'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Package className="w-3.5 h-3.5" />
+            <span>Tous ({products.length})</span>
+          </button>
+
+          {categories.map(cat => {
+            const count = products.filter(p => p.category === cat.name).length;
+            const isSelected = selectedCategory === cat.name;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.name)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-xs border cursor-pointer shrink-0 ${
+                  isSelected
+                    ? `${cat.color || 'bg-amber-600'} text-white border-transparent shadow-md ring-2 ring-amber-400/50`
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
+                }`}
+              >
+                {renderCategoryIcon(cat.icon, "w-3.5 h-3.5")}
+                <span>{cat.name}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  isSelected ? 'bg-black/20 text-white' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Display Settings Button */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setIsDisplaySettingsOpen(true)}
+            className="p-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition flex items-center space-x-1.5 cursor-pointer shadow-2xs hover:text-slate-900 active:scale-95"
+            title="Personnaliser l'affichage des produits (modes, tailles, colonnes)"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-slate-600" />
+            <span className="text-xs font-bold">Affichage</span>
+          </button>
+        </div>
+
+      </div>
+
+      {/* Main Products Container */}
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 pb-36 sm:pb-40 md:pb-12">
+        {filteredProducts.length === 0 ? (
+          <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+            <Package className="w-12 h-12 mb-3 text-slate-300 animate-pulse" />
+            <p className="text-base font-semibold text-slate-700">Aucun produit trouvé</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Essayez de modifier votre recherche ou changez de catégorie.
+            </p>
+          </div>
+        ) : displayPrefs.viewMode === 'cards' ? (
+          /* ================= MODE 1: CARTES PHOTOS ================= */
+          <div className={gridColumnsClass}>
+            {filteredProducts.map(product => {
+              const inCartQty = getCartQuantity(product.id);
+              const isOutOfStock = product.stock <= 0;
+              const isLowStock = product.stock > 0 && product.stock <= product.minStockAlert;
+
+              return (
+                <button
+                  key={product.id}
+                  disabled={isOutOfStock}
+                  onClick={() => handleProductClick(product)}
+                  className={`group relative text-left rounded-2xl transition-all duration-200 border flex flex-col justify-between shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:scale-95 touch-manipulation select-none overflow-hidden ${
+                    isOutOfStock
+                      ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
+                      : inCartQty > 0
+                        ? 'bg-white border-amber-500 ring-2 ring-amber-500/50 text-slate-900 shadow-md'
+                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                  }`}
+                >
+                  {/* Interactive Checkbox / Toggle Badge (Top Left of Photo) */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isOutOfStock) return;
+                      if (inCartQty > 0) {
+                        removeFromCart(product.id);
+                      } else {
+                        handleProductClick(product);
+                      }
+                    }}
+                    className={`absolute top-2 left-2 z-20 px-2 py-1 rounded-lg shadow-md border text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer select-none ${
+                      inCartQty > 0
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 hover:bg-red-500 hover:text-white hover:border-red-400'
+                        : 'bg-white/95 text-slate-600 border-slate-300 hover:bg-slate-100 hover:text-slate-900 backdrop-blur-xs'
+                    }`}
+                    title={inCartQty > 0 ? "Décocher (retirer du panier)" : "Cocher (ajouter au panier)"}
+                  >
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition ${
+                      inCartQty > 0 ? 'bg-slate-950 text-amber-400 border-slate-950' : 'bg-white border-slate-400'
+                    }`}>
+                      {inCartQty > 0 && <Check className="w-3 h-3 stroke-[3]" />}
+                    </div>
+                    <span>{inCartQty > 0 ? `${inCartQty}` : 'Cocher'}</span>
+                  </div>
+
+                  {/* Quick Large Quantity Trigger (Top Right of Card) */}
+                  {!isOutOfStock && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickQuantityProductModal(product);
+                      }}
+                      className="absolute top-2 right-2 z-20 px-2 py-1 rounded-lg shadow-md border text-xs font-black bg-slate-900/90 text-amber-400 border-slate-700 hover:bg-amber-500 hover:text-slate-950 hover:border-amber-400 transition-all flex items-center space-x-1 cursor-pointer select-none backdrop-blur-xs"
+                      title="Saisie directe d'une grande quantité (ex: 24, 48, 100...)"
+                    >
+                      <Calculator className="w-3 h-3" />
+                      <span>Qté</span>
+                    </div>
+                  )}
+
+                  {/* Photo Container */}
+                  {displayPrefs.showImages && (
+                    <div className={`relative w-full ${cardPhotoClass} overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center`}>
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-300">
+                          <ImageIcon className="w-10 h-10 opacity-30" />
+                        </div>
+                      )}
+
+                      {/* Discreet Unit & Flavor Badges */}
+                      <div className="absolute bottom-1.5 right-1.5 z-10 flex items-center space-x-1">
+                        {product.flavors && product.flavors.length > 0 && (
+                          <span className="text-[9px] font-black text-amber-950 bg-amber-400/95 backdrop-blur-xs px-1.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
+                            {product.flavors.length} Parfums
+                          </span>
+                        )}
+                        <span className="text-[9px] font-bold text-slate-700 bg-white/95 backdrop-blur-xs px-1.5 py-0.5 rounded-full border border-slate-200 shadow-2xs pointer-events-auto">
+                          {product.unit}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Details Container */}
+                  <div className="p-2 sm:p-2.5 bg-white flex flex-col justify-between gap-1 border-t border-slate-100 flex-1">
+                    <h3 className="font-extrabold text-xs sm:text-[13px] leading-tight text-slate-900 group-hover:text-amber-600 transition-colors line-clamp-1 sm:line-clamp-2">
+                      {product.name}
+                    </h3>
+
+                    {/* Bottom Row: Price & Stock Status */}
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                      <div className="font-black text-xs sm:text-sm text-amber-600 tracking-tight">
+                        {product.price.toLocaleString()} <span className="text-[9px] font-bold text-slate-500">{settings.currency}</span>
+                      </div>
+
+                      {/* Stock Status Badge */}
+                      {displayPrefs.showStockBadges && (
+                        <div>
+                          {isOutOfStock ? (
+                            <span className="text-[8px] sm:text-[9px] font-black text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md flex items-center space-x-0.5">
+                              <AlertCircle className="w-2.5 h-2.5" />
+                              <span>Rupture</span>
+                            </span>
+                          ) : isLowStock ? (
+                            <span className="text-[8px] sm:text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md">
+                              Reste: {product.stock}
+                            </span>
+                          ) : (
+                            <span className="text-[8px] sm:text-[9px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                              Reste: {product.stock}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                </button>
+              );
+            })}
+          </div>
+        ) : displayPrefs.viewMode === 'simple_icon' ? (
+          /* ================= MODE 2: ICÔNE SIMPLE / TACTILE RAPIDE ================= */
+          <div className={gridColumnsClass}>
+            {filteredProducts.map(product => {
+              const inCartQty = getCartQuantity(product.id);
+              const isOutOfStock = product.stock <= 0;
+              const isLowStock = product.stock > 0 && product.stock <= product.minStockAlert;
+
+              return (
+                <button
+                  key={product.id}
+                  disabled={isOutOfStock}
+                  onClick={() => handleProductClick(product)}
+                  className={`group relative text-left p-2.5 sm:p-3 rounded-2xl transition-all duration-150 border flex flex-col justify-between shadow-2xs hover:shadow-md active:scale-95 touch-manipulation select-none ${
+                    isOutOfStock
+                      ? 'bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed'
+                      : inCartQty > 0
+                        ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/40 text-slate-900 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-amber-400 text-slate-900'
+                  }`}
+                >
+                  {/* Top Bar: Mini Icon / Thumbnail + Cart Qty Badge */}
+                  <div className="flex items-center justify-between w-full mb-1.5">
+                    {/* Category Icon or Mini Thumbnail */}
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                      {product.image && displayPrefs.showImages ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <Package className="w-4 h-4 text-slate-600" />
+                      )}
+                    </div>
+
+                    {/* Cart Quantity Badge or Quick Add Icon */}
+                    <div className="flex items-center space-x-1">
+                      {!isOutOfStock && (
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setQuickQuantityProductModal(product);
+                          }}
+                          className="w-6 h-6 rounded-lg bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-600 flex items-center justify-center transition cursor-pointer"
+                          title="Saisie directe grande quantité"
+                        >
+                          <Calculator className="w-3 h-3" />
+                        </div>
+                      )}
+
+                      {inCartQty > 0 ? (
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFromCart(product.id);
+                          }}
+                          className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[11px] font-black shadow-xs flex items-center space-x-1 hover:bg-red-500 hover:text-white transition cursor-pointer"
+                          title="Retirer une unité"
+                        >
+                          <Check className="w-3 h-3 stroke-[3]" />
+                          <span>{inCartQty}</span>
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-lg bg-slate-100 group-hover:bg-amber-500 group-hover:text-slate-950 text-slate-500 flex items-center justify-center transition">
+                          <Plus className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Product Title */}
+                  <h4 className="font-extrabold text-xs sm:text-[13px] leading-tight text-slate-900 line-clamp-2 mb-1 group-hover:text-amber-700">
+                    {product.name}
+                  </h4>
+
+                  {/* Bottom: Price & Stock Tag */}
+                  <div className="flex items-end justify-between pt-1 border-t border-slate-100/80 mt-auto">
+                    <div className="font-black text-xs sm:text-sm text-amber-600">
+                      {product.price.toLocaleString()} <span className="text-[9px] font-bold text-slate-400">{settings.currency}</span>
+                    </div>
+
+                    {displayPrefs.showStockBadges && (
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                        isOutOfStock 
+                          ? 'bg-red-100 text-red-700' 
+                          : isLowStock 
+                            ? 'bg-amber-100 text-amber-800' 
+                            : 'bg-slate-100 text-slate-500'
+                      }`}>
+                        {isOutOfStock ? '0' : product.stock}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Flavors indicator */}
+                  {product.flavors && product.flavors.length > 0 && (
+                    <div className="mt-1 text-[8px] font-black text-amber-800 bg-amber-100/80 rounded px-1 text-center truncate">
+                      {product.flavors.length} parfums au choix
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* ================= MODE 3: LISTE COMPACTE / LIGNES DÉTAILLÉES ================= */
+          <div className="space-y-1.5">
+            {filteredProducts.map(product => {
+              const inCartQty = getCartQuantity(product.id);
+              const isOutOfStock = product.stock <= 0;
+              const isLowStock = product.stock > 0 && product.stock <= product.minStockAlert;
+
+              return (
+                <div
+                  key={product.id}
+                  className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-2xs ${
+                    isOutOfStock
+                      ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
+                      : inCartQty > 0
+                        ? 'bg-amber-50/50 border-amber-400 ring-1 ring-amber-400 text-slate-900 shadow-xs'
+                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900'
+                  }`}
+                >
+                  {/* Left: Thumbnail & Info */}
+                  <div 
+                    onClick={() => handleProductClick(product)}
+                    className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
+                  >
+                    {/* Thumbnail */}
+                    {displayPrefs.showImages && (
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                        {product.image ? (
+                          <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <Package className="w-5 h-5 text-slate-400" />
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-1.5">
+                        <h4 className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                          {product.name}
+                        </h4>
+                        {product.flavors && product.flavors.length > 0 && (
+                          <span className="text-[9px] font-black text-amber-900 bg-amber-100 px-1.5 py-0.2 rounded-full shrink-0">
+                            {product.flavors.length} parfums
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                        <span className="bg-slate-100 px-1.5 py-0.2 rounded text-[10px] font-medium text-slate-600">
+                          {product.category}
+                        </span>
+                        <span>•</span>
+                        <span>{product.unit}</span>
+                        {displayPrefs.showStockBadges && (
+                          <>
+                            <span>•</span>
+                            <span className={isOutOfStock ? 'text-red-600 font-bold' : isLowStock ? 'text-amber-700 font-bold' : 'text-slate-600'}>
+                              Stock: {product.stock}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Price & Fast Cart Controls */}
+                  <div className="flex items-center space-x-3 shrink-0">
+                    <div className="text-right">
+                      <div className="font-black text-xs sm:text-base text-amber-600">
+                        {product.price.toLocaleString()} <span className="text-[10px] font-bold text-slate-400">{settings.currency}</span>
+                      </div>
+                    </div>
+
+                    {/* Stepper / Action Button */}
+                    {isOutOfStock ? (
+                      <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-xl border border-red-200">
+                        Rupture
+                      </span>
+                    ) : inCartQty > 0 ? (
+                      <div className="flex items-center space-x-1.5">
+                        <div className="flex items-center space-x-1 bg-amber-100 border border-amber-300 rounded-xl p-0.5">
+                          <button
+                            onClick={() => removeFromCart(product.id)}
+                            className="w-7 h-7 rounded-lg bg-white text-slate-900 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-xs transition cursor-pointer"
+                            title="Diminuer"
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="w-6 text-center font-black text-xs text-amber-950">
+                            {inCartQty}
+                          </span>
+                          <button
+                            onClick={() => handleProductClick(product)}
+                            className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-600 flex items-center justify-center shadow-xs transition cursor-pointer"
+                            title="Ajouter"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setQuickQuantityProductModal(product)}
+                          className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-700 font-bold border border-slate-200 flex items-center justify-center transition cursor-pointer"
+                          title="Saisie directe grande quantité"
+                        >
+                          <Calculator className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          onClick={() => handleProductClick(product)}
+                          className="py-1.5 px-3 rounded-xl bg-slate-900 hover:bg-amber-500 hover:text-slate-950 text-amber-400 font-bold text-xs shadow-xs transition flex items-center space-x-1 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Ajouter</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuickQuantityProductModal(product)}
+                          className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-700 font-bold border border-slate-200 shadow-2xs transition flex items-center space-x-1 cursor-pointer"
+                          title="Saisie directe grande quantité"
+                        >
+                          <Calculator className="w-3.5 h-3.5 text-amber-600" />
+                          <span className="hidden sm:inline text-[11px]">Qté</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Flavor Selection Modal */}
+      {flavorProductModal && (
+        <FlavorSelectionModal
+          product={flavorProductModal}
+          currency={settings.currency}
+          onClose={() => setFlavorProductModal(null)}
+          onSelectFlavor={(flavor, qty = 1) => {
+            addToCart(flavorProductModal, qty, flavor);
+            setFlavorProductModal(null);
+          }}
+        />
+      )}
+
+      {/* Quick Quantity / Touch Numpad Modal for adding products in bulk */}
+      {quickQuantityProductModal && (
+        <QuickQuantityModal
+          product={quickQuantityProductModal}
+          currentQuantity={getCartQuantity(quickQuantityProductModal.id)}
+          initialFlavor={quickQuantityProductModal.flavors && quickQuantityProductModal.flavors.length > 0 ? quickQuantityProductModal.flavors[0] : undefined}
+          isEditingCartItem={false}
+          currency={settings.currency}
+          onClose={() => setQuickQuantityProductModal(null)}
+          onConfirm={(qty, flavor) => {
+            addToCart(quickQuantityProductModal, qty, flavor);
+            setQuickQuantityProductModal(null);
+          }}
+        />
+      )}
+
+      {/* Display Customization Modal */}
+      {isDisplaySettingsOpen && (
+        <POSDisplaySettingsModal
+          preferences={displayPrefs}
+          onChange={handleUpdateDisplayPrefs}
+          onClose={() => setIsDisplaySettingsOpen(false)}
+        />
+      )}
+
+    </div>
+  );
+};

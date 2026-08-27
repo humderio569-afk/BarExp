@@ -1,0 +1,163 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+/* Styles pour le rendu Markdown et LaTeX */
+.prose-ai {
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+.prose-ai p {
+  margin-bottom: 0.5rem;
+}
+.prose-ai p:last-child {
+  margin-bottom: 0;
+}
+.prose-ai h1, .prose-ai h2, .prose-ai h3, .prose-ai h4 {
+  font-weight: 800;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+  color: #0f172a;
+}
+.prose-ai ul, .prose-ai ol {
+  margin-left: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.prose-ai ul {
+  list-style-type: disc;
+}
+.prose-ai ol {
+  list-style-type: decimal;
+}
+.prose-ai li {
+  margin-bottom: 0.2rem;
+}
+.prose-ai code {
+  background-color: #f1f5f9;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #0f172a;
+}
+.prose-ai pre {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+.prose-ai blockquote {
+  border-left: 3px solid #f59e0b;
+  padding-left: 0.75rem;
+  color: #475569;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+.prose-ai table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+  font-size: 0.75rem;
+}
+.prose-ai th, .prose-ai td {
+  border: 1px solid #e2e8f0;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+.prose-ai th {
+  background-color: #f8fafc;
+  font-weight: 700;
+}
+.katex-display {
+  margin: 0.5rem 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Masquer toutes les barres de défilement (verticales et horizontales) sur tous les navires et éléments */
+* {
+  -ms-overflow-style: none;  /* IE et Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none !important;  /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html, body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-x: hidden;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Impression optimisée pour les Rapports Entreprise A4, Archives Comptables et Tickets de Caisse */
+@media print {
+  @page {
+    size: auto;
+    margin: 5mm;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #printable-report-area,
+  #printable-report-area *,
+  #receipt-print-area,
+  #receipt-print-area *,
+  .printable-area,
+  .printable-area * {
+    visibility: visible !important;
+  }
+
+  #printable-report-area,
+  #receipt-print-area,
+  .printable-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(0.98); }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+

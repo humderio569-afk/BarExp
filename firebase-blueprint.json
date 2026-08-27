@@ -1,0 +1,254 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Product item in inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "minStockAlert": { "type": "number" },
+        "unit": { "type": "string" },
+        "iconName": { "type": "string" },
+        "color": { "type": "string" },
+        "image": { "type": "string" },
+        "barcode": { "type": "string" },
+        "flavors": { "type": "array" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "name", "category", "price", "stock", "active"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "icon": { "type": "string" },
+        "color": { "type": "string" },
+        "bgLight": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Completed point of sale transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "receiptNumber": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "discountTotal": { "type": "number" },
+        "taxTotal": { "type": "number" },
+        "total": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "changeGiven": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "tableName": { "type": "string" },
+        "cashierName": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "receiptNumber", "total", "paymentMethod", "cashierName", "timestamp", "status"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Business expense or procurement record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string", "maxLength": 250 },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "supplier": { "type": "string" },
+        "recordedBy": { "type": "string" }
+      },
+      "required": ["id", "category", "description", "amount", "date", "paymentMethod", "recordedBy"]
+    },
+    "BarTab": {
+      "title": "BarTab",
+      "description": "Open customer tab or active table cart",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tableName": { "type": "string" },
+        "customerName": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "tableName", "status"]
+    },
+    "StockLog": {
+      "title": "StockLog",
+      "description": "Inventory movement audit log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "type": { "type": "string" },
+        "quantity": { "type": "number" },
+        "previousStock": { "type": "number" },
+        "newStock": { "type": "number" },
+        "reason": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "productId", "productName", "type", "quantity", "timestamp"]
+    },
+    "BarSettings": {
+      "title": "BarSettings",
+      "description": "Establishment configuration",
+      "type": "object",
+      "properties": {
+        "barName": { "type": "string" },
+        "tagline": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "currency": { "type": "string" },
+        "taxRate": { "type": "number" },
+        "cashierName": { "type": "string" },
+        "enableStockAlerts": { "type": "boolean" },
+        "logo": { "type": "string" },
+        "nifCif": { "type": "string" },
+        "majorTransactionThreshold": { "type": "number" }
+      },
+      "required": ["barName", "currency", "cashierName"]
+    },
+    "AppUser": {
+      "title": "AppUser",
+      "description": "User account and permission profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Administrative and security audit trail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "action", "details", "userId", "timestamp"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "Conversation sessions with Dona AI assistant",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "messages": { "type": "array" }
+      },
+      "required": ["id", "userId", "title", "createdAt", "updatedAt"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Registered enterprise / bar establishment with unique 8-character code",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string", "maxLength": 16 },
+        "name": { "type": "string", "maxLength": 150 },
+        "managerName": { "type": "string", "maxLength": 150 },
+        "adminEmail": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string" },
+        "currency": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "code", "name", "managerName", "adminEmail", "status", "createdAt"]
+    },
+    "PreRegisteredEmployee": {
+      "title": "PreRegisteredEmployee",
+      "description": "Pre-registered employee for an establishment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "companyId": { "type": "string" },
+        "companyCode": { "type": "string" },
+        "name": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string" },
+        "pinCode": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "companyId", "companyCode", "name", "email", "role", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Establishment records and tenant profiles"
+    },
+    "/pre_registrations/{preRegId}": {
+      "schema": "PreRegisteredEmployee",
+      "description": "Pre-registered employees waiting for Google account claim"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Product catalog and live inventory items"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Product classification and menu categories"
+    },
+    "/sales/{saleId}": {
+      "schema": "Sale",
+      "description": "Completed point of sale transactions"
+    },
+    "/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Operational expenses and procurement records"
+    },
+    "/tabs/{tabId}": {
+      "schema": "BarTab",
+      "description": "Active tables and open customer tabs"
+    },
+    "/stockLogs/{logId}": {
+      "schema": "StockLog",
+      "description": "Inventory audit history"
+    },
+    "/settings/{settingId}": {
+      "schema": "BarSettings",
+      "description": "Establishment settings and parameters"
+    },
+    "/users/{userId}": {
+      "schema": "AppUser",
+      "description": "User profile accounts and permissions"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Security and administrative audit history"
+    },
+    "/chat_sessions/{sessionId}": {
+      "schema": "ChatSession",
+      "description": "Conversations with Dona AI assistant synchronized per user account"
+    }
+  }
+}
