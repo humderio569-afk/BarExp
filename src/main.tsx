@@ -30,34 +30,27 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Register PWA Service Worker in production for Offline Caching & Chrome Omnibox Install
+// Register PWA Service Worker for Offline Caching & All-Device PWA Support
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   if (import.meta.env.PROD) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
         .then((reg) => {
           console.log('[PWA] Service Worker registered with scope:', reg.scope);
+
+          // Check for service worker updates on tab focus
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              reg.update().catch(() => {});
+            }
+          });
         })
         .catch((err) => {
-          console.warn('[PWA] SW registration note:', err);
+          console.warn('[PWA] SW registration notice:', err);
         });
     });
-
-    try {
-      registerSW({
-        immediate: true,
-        onNeedRefresh() {
-          console.log('[PWA] New content available.');
-        },
-        onOfflineReady() {
-          console.log('[PWA] App ready to work offline.');
-        },
-      });
-    } catch (e) {
-      console.warn('[PWA] Virtual SW registration note:', e);
-    }
   } else {
-    // In development / preview mode, ensure active service workers don't intercept Vite HMR / dev assets
+    // In development / preview mode, ensure active service workers don't intercept Vite dev assets
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       for (const registration of registrations) {
         registration.unregister().catch(() => {});

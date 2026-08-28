@@ -23,7 +23,10 @@ import {
   Landmark,
   FileCheck,
   AlertTriangle,
-  Sparkles
+  Sparkles,
+  Laptop,
+  Smartphone,
+  CheckCircle2
 } from 'lucide-react';
 
 export const SettingsModal: React.FC = () => {
@@ -392,6 +395,65 @@ export const SettingsModal: React.FC = () => {
               <p className="text-[11px] text-slate-500 mt-1">
                 Avertissement de sécurité avant validation d'encaissements élevés.
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* PWA & OFFLINE SYSTEM MANAGEMENT */}
+        <div className="md:col-span-2 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 text-white rounded-3xl p-6 border border-amber-500/30 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start space-x-3.5">
+              <div className="p-3 bg-amber-500 text-slate-950 rounded-2xl shadow-md shrink-0">
+                <Laptop className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white flex items-center gap-2">
+                  <span>Application PWA & Mode Hors-Ligne</span>
+                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2 py-0.5 rounded-full">
+                    Tous Appareils & Netlify
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Installez Lamadone Express comme application autonome sur vos ordinateurs de caisse, tablettes iPad / Android et téléphones.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-modal'))}
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-2 transition cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Guide d'Installation PWA</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <p className="font-bold text-slate-200">Compatibilité Netlify Free</p>
+                <p className="text-[11px] text-slate-400">Routage SPA <code>_redirects</code> actif</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <p className="font-bold text-slate-200">Cache Hors-Ligne 100%</p>
+                <p className="text-[11px] text-slate-400">Service Worker & IndexedDB actifs</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <p className="font-bold text-slate-200">Plein Écran Dédié</p>
+                <p className="text-[11px] text-slate-400">Sans barre de navigation du browser</p>
+              </div>
             </div>
           </div>
         </div>

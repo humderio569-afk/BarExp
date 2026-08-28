@@ -2,20 +2,30 @@
   "id": "/",
   "name": "Lamadone Express",
   "short_name": "Lamadone",
-  "description": "Système de Gestion de Bar & Caisse Tactile Professionnel Lamadone Express",
+  "description": "Système de Gestion de Bar & Caisse Tactile Professionnel Lamadone Express - 100% Offline & Cloud Sync",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "any",
-  "background_color": "#020617",
+  "background_color": "#0f172a",
   "theme_color": "#f59e0b",
-  "categories": ["business", "productivity", "food"],
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "food", "utilities", "finance"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
@@ -28,6 +38,35 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Caisse Tactile",
+      "short_name": "Caisse",
+      "description": "Ouvrir directement le terminal de vente et caisse tactile",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Gestion du Stock",
+      "short_name": "Stock",
+      "description": "Consulter les niveaux d'inventaire et réapprovisionnements",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rapports & Bilan",
+      "short_name": "Bilan",
+      "description": "Consulter les recettes, marges et bilans financiers",
+      "url": "/",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

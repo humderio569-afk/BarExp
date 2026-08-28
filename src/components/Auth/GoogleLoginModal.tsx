@@ -9,7 +9,9 @@ import {
   ArrowRight,
   KeyRound,
   AlertCircle,
-  LogIn
+  LogIn,
+  Download,
+  Smartphone
 } from 'lucide-react';
 
 export const GoogleLoginModal: React.FC = () => {
@@ -363,9 +365,17 @@ export const GoogleLoginModal: React.FC = () => {
             </div>
           )}
 
-          <div className="text-center pt-2">
-            <p className="text-[10px] text-slate-400">
-              Connexion sécurisée BarExpress &bull; Firebase Auth
+          <div className="pt-2 flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-modal'))}
+              className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 hover:text-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Installer l'application sur cet appareil (PWA)</span>
+            </button>
+            <p className="text-[10px] text-slate-400 text-center">
+              Connexion sécurisée BarExpress &bull; Firebase Auth &bull; 100% Hors-ligne
             </p>
           </div>
         </div>

@@ -17,7 +17,8 @@ import {
   Sparkles,
   X,
   LogOut,
-  Briefcase
+  Briefcase,
+  Download
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -189,6 +190,17 @@ export const Navbar: React.FC = () => {
                 )}
               </button>
             )}
+
+            {/* PWA App Install Button (Opens guide / triggers native prompt) */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-modal'))}
+              title="Installer l'application PWA (Hors-ligne & Plein écran)"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-950 rounded-xl text-xs font-black transition active:scale-95 cursor-pointer shadow-2xs"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>App PWA</span>
+            </button>
 
             <SyncStatusBanner />
 
