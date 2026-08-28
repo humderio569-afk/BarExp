@@ -893,13 +893,49 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteCompany = async (id: string) => {
-    const comp = companies.find(c => c.id === id);
-    setCompanies(prev => prev.filter(c => c.id !== id));
-    try {
-      await deleteDoc(doc(db, 'companies', id));
-    } catch (err) {
-      console.warn('Could not delete company from Firestore:', err);
+    const comp = companies.find(c => c.id === id || c.code === id);
+    const targetId = comp ? comp.id : id;
+    const targetCode = comp ? comp.code : '';
+
+    // Remove from local state immediately
+    setCompanies(prev => prev.filter(c => c.id !== targetId && (targetCode ? c.code !== targetCode : true)));
+
+    // If currently impersonating/viewing this company, reset it
+    if (impersonatedCompanyId === targetId || (targetCode && impersonatedCompanyId === targetCode)) {
+      setImpersonatedCompanyId(null);
+      safeRemoveItem(STORAGE_KEYS.IMPERSONATED_COMPANY_ID);
     }
+
+    // Delete company document from Firestore
+    try {
+      await deleteDoc(doc(db, 'companies', targetId));
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `companies/${targetId}`);
+    }
+
+    // Cascade delete any pre-registrations linked to this company
+    const linkedPreRegs = preRegistrations.filter(p => p.companyId === targetId || (targetCode && p.companyCode === targetCode));
+    if (linkedPreRegs.length > 0) {
+      setPreRegistrations(prev => prev.filter(p => p.companyId !== targetId && (targetCode ? p.companyCode !== targetCode : true)));
+      for (const preReg of linkedPreRegs) {
+        try {
+          await deleteDoc(doc(db, 'pre_registrations', preReg.id));
+        } catch (err) {
+          console.warn('Error deleting linked pre-registration doc:', err);
+        }
+      }
+    }
+
+    // Cascade remove company association from any local user accounts
+    setAllUsers(prev => prev.map(u => {
+      if (u.companyId === targetId || (targetCode && u.companyCode === targetCode)) {
+        const updated = { ...u, companyId: undefined, companyCode: undefined, companyName: undefined };
+        setDoc(doc(db, 'users', u.uid), cleanForFirestore(updated), { merge: true }).catch(() => {});
+        return updated;
+      }
+      return u;
+    }));
+
     if (comp) {
       await addAuditLog('company_deleted', `Suppression définitive de l'établissement ${comp.name} (${comp.code})`);
     }
@@ -1572,6 +1608,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let unsubscribeStockLogs: (() => void) | null = null;
     let unsubscribeAuditLogs: (() => void) | null = null;
     let unsubscribeSettings: (() => void) | null = null;
+    let unsubscribeCompanies: (() => void) | null = null;
+    let unsubscribePreRegistrations: (() => void) | null = null;
 
     const setupFirestore = async () => {
       if (!db) {
@@ -1721,6 +1759,76 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             console.warn('Audit logs subscription error / offline:', error);
           }
         );
+
+        // 8. Companies Real-Time Synchronized Subscription & Seeding
+        const companiesColRef = collection(db, 'companies');
+        unsubscribeCompanies = onSnapshot(
+          companiesColRef,
+          async (snapshot) => {
+            QuotaTracker.trackReads(snapshot.docs.length || 1);
+            if (!snapshot.empty) {
+              const loadedCompanies = snapshot.docs.map(docSnap => docSnap.data() as Company);
+              setCompanies(loadedCompanies);
+              safeSetItem(STORAGE_KEYS.COMPANIES, JSON.stringify(loadedCompanies));
+            } else {
+              const isBootstrapped = safeGetItem('barexpress_companies_bootstrapped') === 'true';
+              if (!isBootstrapped) {
+                try {
+                  for (const comp of INITIAL_COMPANIES) {
+                    await setDoc(doc(db, 'companies', comp.id), cleanForFirestore(comp)).catch(() => {});
+                  }
+                  safeSetItem('barexpress_companies_bootstrapped', 'true');
+                  setCompanies(INITIAL_COMPANIES);
+                  safeSetItem(STORAGE_KEYS.COMPANIES, JSON.stringify(INITIAL_COMPANIES));
+                } catch (e) {
+                  console.warn('Initial companies bootstrap notice:', e);
+                }
+              } else {
+                setCompanies([]);
+                safeSetItem(STORAGE_KEYS.COMPANIES, JSON.stringify([]));
+              }
+            }
+          },
+          (error) => {
+            setIsServerReachable(false);
+            handleFirestoreError(error, OperationType.LIST, 'companies');
+          }
+        );
+
+        // 9. Pre-Registrations Real-Time Synchronized Subscription & Seeding
+        const preRegsColRef = collection(db, 'pre_registrations');
+        unsubscribePreRegistrations = onSnapshot(
+          preRegsColRef,
+          async (snapshot) => {
+            QuotaTracker.trackReads(snapshot.docs.length || 1);
+            if (!snapshot.empty) {
+              const loadedPreRegs = snapshot.docs.map(docSnap => docSnap.data() as PreRegisteredEmployee);
+              setPreRegistrations(loadedPreRegs);
+              safeSetItem(STORAGE_KEYS.PRE_REGISTRATIONS, JSON.stringify(loadedPreRegs));
+            } else {
+              const isBootstrapped = safeGetItem('barexpress_preregs_bootstrapped') === 'true';
+              if (!isBootstrapped) {
+                try {
+                  for (const preReg of INITIAL_PRE_REGISTRATIONS) {
+                    await setDoc(doc(db, 'pre_registrations', preReg.id), cleanForFirestore(preReg)).catch(() => {});
+                  }
+                  safeSetItem('barexpress_preregs_bootstrapped', 'true');
+                  setPreRegistrations(INITIAL_PRE_REGISTRATIONS);
+                  safeSetItem(STORAGE_KEYS.PRE_REGISTRATIONS, JSON.stringify(INITIAL_PRE_REGISTRATIONS));
+                } catch (e) {
+                  console.warn('Initial preregs bootstrap notice:', e);
+                }
+              } else {
+                setPreRegistrations([]);
+                safeSetItem(STORAGE_KEYS.PRE_REGISTRATIONS, JSON.stringify([]));
+              }
+            }
+          },
+          (error) => {
+            setIsServerReachable(false);
+            handleFirestoreError(error, OperationType.LIST, 'pre_registrations');
+          }
+        );
       } catch (err) {
         console.warn('Firestore subscription setup warning:', err);
       }
@@ -1737,6 +1845,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (unsubscribeStockLogs) unsubscribeStockLogs();
       if (unsubscribeAuditLogs) unsubscribeAuditLogs();
       if (unsubscribeSettings) unsubscribeSettings();
+      if (unsubscribeCompanies) unsubscribeCompanies();
+      if (unsubscribePreRegistrations) unsubscribePreRegistrations();
     };
   }, []);
 
