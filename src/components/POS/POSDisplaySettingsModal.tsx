@@ -54,27 +54,27 @@ export const POSDisplaySettingsModal: React.FC<POSDisplaySettingsModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
-      <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 relative overflow-hidden text-slate-900">
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-200 relative overflow-hidden text-slate-900 max-h-[92dvh] flex flex-col my-auto">
         
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
               <SlidersHorizontal className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-slate-900 text-base leading-tight">
+              <h3 className="font-black text-slate-900 text-sm sm:text-base leading-tight">
                 Personnalisation de l'Affichage
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] sm:text-xs text-slate-500">
                 Ajustez la vue caisse selon votre écran et vos habitudes
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
             title="Fermer"
           >
             <X className="w-5 h-5" />
@@ -82,7 +82,7 @@ export const POSDisplaySettingsModal: React.FC<POSDisplaySettingsModalProps> = (
         </div>
 
         {/* Content */}
-        <div className="py-4 space-y-5 max-h-[75vh] overflow-y-auto">
+        <div className="py-3 sm:py-4 space-y-4 sm:space-y-5 flex-1 overflow-y-auto overscroll-contain pr-1">
           
           {/* 1. Mode d'affichage */}
           <div>

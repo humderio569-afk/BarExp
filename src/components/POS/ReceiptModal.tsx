@@ -43,18 +43,20 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, onClose }) => 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4 text-slate-900 relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-4 sm:p-5 shadow-2xl space-y-4 text-slate-900 relative max-h-[92dvh] flex flex-col my-auto overflow-hidden">
         
-        {/* Success Banner */}
-        <div className="text-center space-y-1">
-          <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto animate-bounce" />
-          <h3 className="text-lg font-black text-slate-900">Vente Réussie !</h3>
-          <p className="text-xs text-slate-500">Stock mis à jour automatiquement en temps réel.</p>
-        </div>
+        {/* Scrollable Receipt Body */}
+        <div className="flex-1 overflow-y-auto space-y-4 overscroll-contain pr-1">
+          {/* Success Banner */}
+          <div className="text-center space-y-1">
+            <CheckCircle className="w-9 h-9 text-emerald-600 mx-auto animate-bounce" />
+            <h3 className="text-base sm:text-lg font-black text-slate-900">Vente Réussie !</h3>
+            <p className="text-xs text-slate-500">Stock mis à jour automatiquement en temps réel.</p>
+          </div>
 
-        {/* Receipt Paper Simulation */}
-        <div id="receipt-print-area" className="bg-amber-50 text-slate-900 p-4 rounded-2xl font-mono text-xs shadow-inner space-y-3 border border-amber-200 select-none">
+          {/* Receipt Paper Simulation */}
+          <div id="receipt-print-area" className="bg-amber-50 text-slate-900 p-4 rounded-2xl font-mono text-xs shadow-inner space-y-3 border border-amber-200 select-none">
           
           {/* Header */}
           <div className="text-center space-y-0.5 border-b border-dashed border-slate-400 pb-3">
@@ -164,9 +166,10 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, onClose }) => 
           </div>
 
         </div>
+        </div>
 
         {/* Action Buttons */}
-        <div className="space-y-2 pt-1">
+        <div className="space-y-2 pt-1 shrink-0">
           {downloadSuccess && (
             <div className="p-2 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-bold text-center flex items-center justify-center space-x-1.5 animate-fadeIn">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />

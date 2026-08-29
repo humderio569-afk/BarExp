@@ -54,7 +54,7 @@ export const SuperAdminLayout: React.FC = () => {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-lg text-white tracking-tight leading-none">
-                  BarExpress
+                  BarExp
                 </span>
                 <span className="bg-amber-500 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">
                   SUPER ADMIN

@@ -142,6 +142,7 @@ export type AuditAction =
   | 'employee_claimed';
 
 export type SubscriptionBillingCycle = 'monthly' | 'annual' | 'lifetime' | 'custom';
+export type PlanType = SubscriptionBillingCycle;
 export type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'lifetime' | 'suspended';
 
 export interface QuotaFeePolicy {
@@ -150,6 +151,41 @@ export interface QuotaFeePolicy {
   maxAiQueriesPerMonth: number; // Ex: 500 requêtes IA incluses
   overageFeePer1000Tx: number; // Ex: 5 USD par tranche de 1000 tickets supplémentaires
   overageFeePer100AiQueries: number; // Ex: 2 USD par tranche de 100 requêtes IA supplémentaires
+}
+
+export interface ManualPaymentMethodConfig {
+  id: string; // 'moncash' | 'natcash' | custom
+  name: string; // 'MonCash' | 'NatCash'
+  accountNumber: string; // Ex: '+509 3700-1122'
+  accountName: string; // Ex: 'BarExp Platform / Direction'
+  instructions: string; // Instructions de transfert
+  active: boolean; // Activé / Désactivé par le super admin
+  logoType?: 'moncash' | 'natcash' | 'custom';
+}
+
+export type ManualPaymentMethod = ManualPaymentMethodConfig;
+
+export interface ManualPaymentProof {
+  id: string;
+  companyId: string;
+  companyCode: string;
+  companyName: string;
+  adminEmail: string;
+  adminName?: string;
+  planType: SubscriptionBillingCycle; // 'monthly' | 'annual' | 'lifetime'
+  amount: number;
+  currency: string;
+  paymentMethodId: string; // 'moncash' | 'natcash'
+  paymentMethodName: string; // 'MonCash' | 'NatCash'
+  transactionReference: string; // Numéro de référence de transaction
+  senderPhone?: string; // Téléphone de l'expéditeur
+  proofImageUrl?: string; // Photo / Capture d'écran du reçu de paiement
+  proofPhotoUrl?: string; // Alias photo
+  status: 'pending' | 'approved' | 'disapproved';
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  disapprovalReason?: string; // Mention de désapprobation rédigée par le super admin
 }
 
 export interface CompanySubscription {
@@ -162,6 +198,7 @@ export interface CompanySubscription {
   autoRenew: boolean;
   paymentMethod?: string;
   notes?: string;
+  trialDaysRemaining?: number;
   quotaPolicy: QuotaFeePolicy; // Politique de quota spécifique à l'établissement
 }
 
@@ -176,6 +213,13 @@ export interface PlatformBillingSettings {
     lifetime: boolean;
   };
   globalQuotaPolicy: QuotaFeePolicy;
+  manualPaymentMethods?: ManualPaymentMethodConfig[];
+  supportContact?: {
+    phone: string;
+    whatsapp: string;
+    email: string;
+    description?: string;
+  };
 }
 
 export interface StaffPinConfig {
@@ -215,6 +259,7 @@ export interface Company {
   cashierName?: string;
   nifCif?: string;
   autoApprovePreRegistered?: boolean;
+  allowCameraScanner?: boolean; // Seul le Super Admin peut activer ou désactiver le scanner caméra
   staffPins?: StaffPinConfig[];
   subscription?: CompanySubscription;
   stats?: {
@@ -284,6 +329,9 @@ export interface BarSettings {
   customGeminiApiKey?: string; // Clé API Gemini personnalisée de l'établissement
   donaCustomInstructions?: string; // Instructions & directives spécifiques du bar
   donaAccessMode?: 'all' | 'admins_only' | 'custom'; // Politique d'accès par défaut
+
+  // Scanner Code-Barres Caméra (Autorisé uniquement par le Super Admin)
+  allowCameraScanner?: boolean;
 
   // Configuration Abonnements & Quotas Plateforme (Super Admin)
   platformBilling?: PlatformBillingSettings;

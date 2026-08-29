@@ -1,4 +1,4 @@
-import { Product, Category, Expense, BarSettings, Sale, CategoryItem, Company, PreRegisteredEmployee, SUPER_ADMIN_EMAIL } from '../types';
+import { Product, Category, Expense, BarSettings, Sale, CategoryItem, Company, PreRegisteredEmployee, SUPER_ADMIN_EMAIL, ManualPaymentProof } from '../types';
 
 export const CATEGORIES_CONFIG: CategoryItem[] = [
   { id: 'cat_bieres', name: 'Bières', color: 'bg-amber-600', bgLight: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'Beer' },
@@ -401,8 +401,78 @@ export const INITIAL_SETTINGS: BarSettings = {
       overageFeePer1000Tx: 5,
       overageFeePer100AiQueries: 2,
     },
+    manualPaymentMethods: [
+      {
+        id: 'moncash',
+        name: 'MonCash',
+        accountNumber: '+509 3700-1122',
+        accountName: 'BarExp Platform / Direction Générale',
+        instructions: 'Envoyez le montant exact sur ce numéro MonCash puis téléversez la capture d\'écran du SMS de confirmation reçu de la Digicel.',
+        active: true,
+        logoType: 'moncash',
+      },
+      {
+        id: 'natcash',
+        name: 'NatCash',
+        accountNumber: '+509 4812-3344',
+        accountName: 'BarExp Platform / Trésorerie',
+        instructions: 'Effectuez le transfert vers ce numéro NatCash Natcom puis téléversez la capture d\'écran du reçu de confirmation avec le numéro de transaction.',
+        active: true,
+        logoType: 'natcash',
+      },
+    ],
+    supportContact: {
+      phone: '+509 3700-1122',
+      whatsapp: '+509 3700-1122',
+      email: 'humderio569@gmail.com',
+      description: 'Support technique et assistance administrative BarExp disponible 7j/7.',
+    },
   },
 };
+
+export const INITIAL_MANUAL_PAYMENT_PROOFS: ManualPaymentProof[] = [
+  {
+    id: 'proof_1',
+    companyId: 'comp_spt44921',
+    companyCode: 'SPT44921',
+    companyName: 'Le Spot Lounge & Bar',
+    adminEmail: 'fabrice.spot@gmail.com',
+    adminName: 'Fabrice Augustin',
+    planType: 'monthly',
+    amount: 15,
+    currency: 'USD',
+    paymentMethodId: 'moncash',
+    paymentMethodName: 'MonCash',
+    transactionReference: 'MC-98745210',
+    senderPhone: '+509 4812-3344',
+    proofImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
+    status: 'approved',
+    submittedAt: '2026-02-01T14:35:00.000Z',
+    reviewedAt: '2026-02-01T15:00:00.000Z',
+    reviewedBy: SUPER_ADMIN_EMAIL,
+  },
+  {
+    id: 'proof_2',
+    companyId: 'comp_bar99104',
+    companyCode: 'BAR99104',
+    companyName: 'Le Zinc Doré Bistro',
+    adminEmail: 'nathalie.zinc@gmail.com',
+    adminName: 'Nathalie Joseph',
+    planType: 'annual',
+    amount: 100,
+    currency: 'USD',
+    paymentMethodId: 'natcash',
+    paymentMethodName: 'NatCash',
+    transactionReference: 'NC-55419823',
+    senderPhone: '+509 3456-7890',
+    proofImageUrl: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&w=800&q=80',
+    status: 'disapproved',
+    submittedAt: '2026-02-15T11:20:00.000Z',
+    reviewedAt: '2026-02-16T09:30:00.000Z',
+    reviewedBy: SUPER_ADMIN_EMAIL,
+    disapprovalReason: 'Numéro de transaction introuvable sur les relevés Natcom. Veuillez vérifier le montant et renvoyer la capture complète du SMS.',
+  },
+];
 
 // Create some sample completed sales for today
 const today = new Date();

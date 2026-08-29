@@ -158,32 +158,32 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 animate-fadeIn">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-4xl w-full max-h-[90vh] shadow-2xl flex flex-col text-slate-900 overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-4xl w-full max-h-[92dvh] shadow-2xl flex flex-col text-slate-900 overflow-hidden my-auto">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 text-white flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
-              <History className="w-5 h-5" />
+        <div className="shrink-0 p-3.5 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-950 text-white flex items-center justify-between">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+              <History className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-black text-white">Journal d'Audit & Historique des Stocks</h3>
-                <span className="bg-amber-400/20 text-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-400/30">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-sm sm:text-base md:text-lg font-black text-white truncate">Journal d'Audit & Historique des Stocks</h3>
+                <span className="bg-amber-400/20 text-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-amber-400/30 shrink-0">
                   {filteredLogs.length} mouvement(s)
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
+              <p className="text-[11px] sm:text-xs text-slate-300 truncate hidden xs:block">
                 Consultez l'historique complet de vos entrées, sorties, ventes et ajustements dans le temps.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={exportCSV}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition cursor-pointer border border-white/10"
+              className="px-2.5 sm:px-3 py-1.5 bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-bold rounded-xl flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer border border-white/10"
               title="Exporter les mouvements en CSV"
             >
               <Download className="w-3.5 h-3.5 text-slate-300" />
@@ -196,10 +196,10 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                   onClose();
                   onOpenReport('inventory_perpetual');
                 }}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center space-x-1.5 transition cursor-pointer"
+                className="px-2.5 sm:px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl flex items-center space-x-1 sm:space-x-1.5 transition cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Rapport Officiel</span>
+                <span className="hidden sm:inline">Rapport</span>
               </button>
             )}
 
@@ -213,7 +213,7 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
         </div>
 
         {/* Filters Bar */}
-        <div className="p-4 bg-slate-50 border-b border-slate-200 space-y-3">
+        <div className="shrink-0 p-3 sm:p-4 bg-slate-50 border-b border-slate-200 space-y-2.5">
           
           {/* Period selector */}
           <div className="flex flex-wrap items-center gap-1.5">

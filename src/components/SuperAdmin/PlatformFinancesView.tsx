@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBar } from '../../context/BarContext';
 import { Company, CompanySubscription, SubscriptionBillingCycle, SubscriptionStatus } from '../../types';
+import { ManualPaymentProofsView } from './ManualPaymentProofsView';
 import {
   DollarSign,
   TrendingUp,
@@ -21,14 +22,21 @@ import {
   SlidersHorizontal,
   Lock,
   ShieldCheck,
-  Info
+  Info,
+  Camera
 } from 'lucide-react';
 
 export const PlatformFinancesView: React.FC = () => {
-  const { companies, sales, platformStats, settings, updateSettings, updateCompany } = useBar();
+  const { companies, sales, platformStats, settings, updateSettings, updateCompany, manualPaymentProofs } = useBar();
+
+  // Active sub-tab
+  const [activeFinanceSubTab, setActiveFinanceSubTab] = useState<'proofs' | 'subscriptions'>('proofs');
 
   // Reference currency for GMV display
   const [currencySymbol, setCurrencySymbol] = useState<string>('G');
+
+  // Pending proofs count for badge
+  const pendingProofsCount = manualPaymentProofs.filter(p => p.status === 'pending').length;
 
   // Search & Filter state for companies table
   const [companySearch, setCompanySearch] = useState('');
@@ -301,8 +309,46 @@ export const PlatformFinancesView: React.FC = () => {
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      {/* Sub-tab navigation */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveFinanceSubTab('proofs')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
+            activeFinanceSubTab === 'proofs'
+              ? 'bg-amber-500 text-slate-950 shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <Camera className="w-4 h-4" />
+          <span>Preuves de Paiement MonCash & NatCash</span>
+          {pendingProofsCount > 0 && (
+            <span className="px-2 py-0.5 bg-slate-950 text-amber-400 text-[10px] font-black rounded-full animate-bounce">
+              {pendingProofsCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveFinanceSubTab('subscriptions')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition cursor-pointer ${
+            activeFinanceSubTab === 'subscriptions'
+              ? 'bg-amber-500 text-slate-950 shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Parc d'Abonnements & Tarifs SaaS</span>
+        </button>
+      </div>
+
+      {activeFinanceSubTab === 'proofs' ? (
+        <ManualPaymentProofsView />
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* MRR / ARR */}
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
@@ -704,6 +750,8 @@ export const PlatformFinancesView: React.FC = () => {
           </table>
         </div>
       </div>
+    </>
+  )}
 
       {/* GUARDED GLOBAL PRICING CONFIGURATION MODAL (Prevents Accidental Editing) */}
       {isPricingModalOpen && (

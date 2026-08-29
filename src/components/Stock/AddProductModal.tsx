@@ -4,7 +4,7 @@ import { Category } from '../../types';
 import { PRESET_PRODUCT_IMAGES } from '../../data/presetImages';
 import { DEFAULT_UNITS, VARIETY_LABEL_PRESETS } from '../../data/unitsConfig';
 import { UnitManagerModal } from './UnitManagerModal';
-import { X, PlusCircle, Check, Image, Upload, Calculator, Scale, Sparkles, Plus, Tag } from 'lucide-react';
+import { X, PlusCircle, Check, Image, Upload, Calculator, Scale, Sparkles, Plus, Tag, ScanBarcode } from 'lucide-react';
 import { CrateCalculatorModal } from './CrateCalculatorModal';
 import { compressImageFile } from '../../utils/imageCompressor';
 
@@ -21,6 +21,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ onClose }) => 
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Category>(categories[0]?.name || 'Bières');
+  const [barcode, setBarcode] = useState('');
   const [price, setPrice] = useState<string>('');
   const [costPrice, setCostPrice] = useState<string>('');
   const [stock, setStock] = useState<string>('');
@@ -57,6 +58,17 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ onClose }) => 
     } finally {
       setIsCompressing(false);
     }
+  };
+
+  const handleGenerateBarcode = () => {
+    // Generate standard 13-digit code: prefix 200 (internal use) + 9 digits + checksum
+    const raw = '200' + Math.floor(100000000 + Math.random() * 900000000).toString();
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(raw[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const checkDigit = (10 - (sum % 10)) % 10;
+    setBarcode(raw + checkDigit.toString());
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -97,6 +109,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ onClose }) => 
     addProduct({
       name: name.trim(),
       category,
+      barcode: barcode.trim() || undefined,
       price: numPrice,
       costPrice: numCost,
       stock: numStock,
@@ -119,25 +132,26 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ onClose }) => 
     .filter(Boolean);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 text-slate-900 my-8 relative">
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full max-h-[92dvh] flex flex-col p-4 sm:p-6 shadow-2xl text-slate-900 my-auto relative overflow-hidden">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="shrink-0 flex items-center justify-between border-b border-slate-200 pb-3 mb-2">
           <div className="flex items-center space-x-2">
             <PlusCircle className="w-5 h-5 text-amber-600" />
-            <h3 className="text-lg font-black text-slate-900">Nouveau Produit</h3>
+            <h3 className="text-base sm:text-lg font-black text-slate-900">Nouveau Produit</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full transition"
+            className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 text-xs overscroll-contain pr-1 flex flex-col">
+          <div className="space-y-4 flex-1">
           
           {/* Photo / Image Selection */}
           <div className="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
@@ -211,20 +225,46 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ onClose }) => 
             )}
           </div>
 
-          {/* Nom du produit */}
-          <div>
-            <label className="block font-bold text-slate-900 mb-1">
-              Nom du Produit / Article / Boisson / Plat *
-            </label>
-            <input
-              type="text"
-              required
-              autoFocus
-              placeholder="ex: Prestige Bouteille, Chemise Slim, Riz 25kg, Griot"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-medium p-2.5 rounded-xl focus:outline-none focus:border-amber-500 text-sm"
-            />
+          {/* Nom du produit & Code-Barres */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block font-bold text-slate-900 mb-1">
+                Nom du Produit / Article / Boisson / Plat *
+              </label>
+              <input
+                type="text"
+                required
+                autoFocus
+                placeholder="ex: Prestige Bouteille, Chemise Slim, Riz 25kg, Griot"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-medium p-2.5 rounded-xl focus:outline-none focus:border-amber-500 text-sm"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-slate-900 text-xs flex items-center gap-1">
+                  <ScanBarcode className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Code-Barres</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateBarcode}
+                  className="text-[10px] text-amber-700 hover:text-amber-800 font-bold underline cursor-pointer"
+                  title="Générer automatiquement un code-barres EAN-13 interne"
+                >
+                  Générer EAN
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="ex: 200123456789"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono font-bold p-2.5 rounded-xl focus:outline-none focus:border-amber-500 text-xs"
+              />
+            </div>
           </div>
 
           {/* Catégorie & Unité */}
@@ -521,12 +561,14 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({ onClose }) => 
             </div>
           )}
 
+          </div>
+
           {/* Form Submit */}
-          <div className="pt-2 flex justify-end space-x-2">
+          <div className="pt-3 border-t border-slate-100 shrink-0 flex justify-end space-x-2 mt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
             >
               Annuler
             </button>

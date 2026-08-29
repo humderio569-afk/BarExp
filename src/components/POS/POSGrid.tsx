@@ -9,6 +9,7 @@ import {
   POSDisplayPreferences, 
   DEFAULT_DISPLAY_PREFERENCES 
 } from './POSDisplaySettingsModal';
+import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { 
   Search, 
   Package, 
@@ -20,7 +21,9 @@ import {
   Sparkles, 
   X,
   SlidersHorizontal,
-  Calculator
+  Calculator,
+  ScanBarcode,
+  Lock
 } from 'lucide-react';
 import { safeGetItem, safeSetItem } from '../../utils/storage';
 
@@ -38,12 +41,17 @@ export const POSGrid: React.FC = () => {
     removeFromCart,
     cart,
     settings,
+    activeCompany,
+    isSuperAdmin,
   } = useBar();
+
+  const isCameraScannerAllowed = isSuperAdmin || activeCompany?.allowCameraScanner === true || settings.allowCameraScanner === true;
 
   const [flavorProductModal, setFlavorProductModal] = useState<Product | null>(null);
   const [quickQuantityProductModal, setQuickQuantityProductModal] = useState<Product | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDisplaySettingsOpen, setIsDisplaySettingsOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Load / Save Display Preferences
@@ -237,15 +245,38 @@ export const POSGrid: React.FC = () => {
           })}
         </div>
 
-        {/* Display Settings Button */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Actions Toolbar: Scanner + Display Settings */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={() => setIsBarcodeScannerOpen(true)}
+            className={`p-2 sm:px-3 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95 border ${
+              isCameraScannerAllowed
+                ? 'bg-slate-900 hover:bg-slate-800 text-amber-400 border-slate-800'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border-slate-200'
+            }`}
+            title={
+              isCameraScannerAllowed
+                ? "Scanner des codes-barres avec la caméra"
+                : "Scanner Caméra (Activable uniquement par le Super Admin)"
+            }
+          >
+            {isCameraScannerAllowed ? (
+              <ScanBarcode className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+            )}
+            <span className="text-xs font-black hidden sm:inline">
+              Scanner
+            </span>
+          </button>
+
           <button
             onClick={() => setIsDisplaySettingsOpen(true)}
             className="p-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition flex items-center space-x-1.5 cursor-pointer shadow-2xs hover:text-slate-900 active:scale-95"
             title="Personnaliser l'affichage des produits (modes, tailles, colonnes)"
           >
             <SlidersHorizontal className="w-4 h-4 text-slate-600" />
-            <span className="text-xs font-bold">Affichage</span>
+            <span className="text-xs font-bold hidden md:inline">Affichage</span>
           </button>
         </div>
 
@@ -363,25 +394,25 @@ export const POSGrid: React.FC = () => {
                     </h3>
 
                     {/* Bottom Row: Price & Stock Status */}
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                      <div className="font-black text-xs sm:text-sm text-amber-600 tracking-tight">
+                    <div className="flex flex-wrap items-baseline justify-between gap-1 pt-1 border-t border-slate-100 mt-auto">
+                      <div className="font-black text-xs sm:text-sm text-amber-600 tracking-tight shrink-0 whitespace-nowrap">
                         {product.price.toLocaleString()} <span className="text-[9px] font-bold text-slate-500">{settings.currency}</span>
                       </div>
 
                       {/* Stock Status Badge */}
                       {displayPrefs.showStockBadges && (
-                        <div>
+                        <div className="shrink-0">
                           {isOutOfStock ? (
-                            <span className="text-[8px] sm:text-[9px] font-black text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md flex items-center space-x-0.5">
+                            <span className="text-[8px] sm:text-[9px] font-black text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md flex items-center space-x-0.5 whitespace-nowrap">
                               <AlertCircle className="w-2.5 h-2.5" />
                               <span>Rupture</span>
                             </span>
                           ) : isLowStock ? (
-                            <span className="text-[8px] sm:text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[8px] sm:text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md whitespace-nowrap">
                               Reste: {product.stock}
                             </span>
                           ) : (
-                            <span className="text-[8px] sm:text-[9px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                            <span className="text-[8px] sm:text-[9px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">
                               Reste: {product.stock}
                             </span>
                           )}
@@ -471,14 +502,14 @@ export const POSGrid: React.FC = () => {
                     {product.name}
                   </h4>
 
-                  {/* Bottom: Price & Stock Tag */}
-                  <div className="flex items-end justify-between pt-1 border-t border-slate-100/80 mt-auto">
-                    <div className="font-black text-xs sm:text-sm text-amber-600">
+                  {/* Bottom: Price & Stock Tag (Never overlapping) */}
+                  <div className="flex flex-wrap items-baseline justify-between gap-1 pt-1 border-t border-slate-100/80 mt-auto w-full">
+                    <div className="font-black text-xs sm:text-sm text-amber-600 whitespace-nowrap shrink-0">
                       {product.price.toLocaleString()} <span className="text-[9px] font-bold text-slate-400">{settings.currency}</span>
                     </div>
 
                     {displayPrefs.showStockBadges && (
-                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                      <span className={`text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap ${
                         isOutOfStock 
                           ? 'bg-red-100 text-red-700' 
                           : isLowStock 
@@ -492,7 +523,7 @@ export const POSGrid: React.FC = () => {
 
                   {/* Flavors indicator */}
                   {product.flavors && product.flavors.length > 0 && (
-                    <div className="mt-1 text-[8px] font-black text-amber-800 bg-amber-100/80 rounded px-1 text-center truncate">
+                    <div className="mt-1 text-[8px] font-black text-amber-800 bg-amber-100/80 rounded px-1 text-center truncate w-full">
                       {product.flavors.length} parfums au choix
                     </div>
                   )}
@@ -511,7 +542,7 @@ export const POSGrid: React.FC = () => {
               return (
                 <div
                   key={product.id}
-                  className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-2xs ${
+                  className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-between gap-2.5 sm:gap-3 shadow-2xs ${
                     isOutOfStock
                       ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'
                       : inCartQty > 0
@@ -522,11 +553,11 @@ export const POSGrid: React.FC = () => {
                   {/* Left: Thumbnail & Info */}
                   <div 
                     onClick={() => handleProductClick(product)}
-                    className="flex items-center space-x-3 flex-1 min-w-0 cursor-pointer"
+                    className="flex items-center space-x-2.5 sm:space-x-3 flex-1 min-w-0 cursor-pointer"
                   >
                     {/* Thumbnail */}
                     {displayPrefs.showImages && (
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                      <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
                         {product.image ? (
                           <img 
                             src={product.image} 
@@ -535,7 +566,7 @@ export const POSGrid: React.FC = () => {
                             onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                           />
                         ) : (
-                          <Package className="w-5 h-5 text-slate-400" />
+                          <Package className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                         )}
                       </div>
                     )}
@@ -552,7 +583,7 @@ export const POSGrid: React.FC = () => {
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 text-[11px] text-slate-500 flex-wrap">
                         <span className="bg-slate-100 px-1.5 py-0.2 rounded text-[10px] font-medium text-slate-600">
                           {product.category}
                         </span>
@@ -561,7 +592,7 @@ export const POSGrid: React.FC = () => {
                         {displayPrefs.showStockBadges && (
                           <>
                             <span>•</span>
-                            <span className={isOutOfStock ? 'text-red-600 font-bold' : isLowStock ? 'text-amber-700 font-bold' : 'text-slate-600'}>
+                            <span className={`whitespace-nowrap ${isOutOfStock ? 'text-red-600 font-bold' : isLowStock ? 'text-amber-700 font-bold' : 'text-slate-600'}`}>
                               Stock: {product.stock}
                             </span>
                           </>
@@ -571,8 +602,8 @@ export const POSGrid: React.FC = () => {
                   </div>
 
                   {/* Right: Price & Fast Cart Controls */}
-                  <div className="flex items-center space-x-3 shrink-0">
-                    <div className="text-right">
+                  <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+                    <div className="text-right whitespace-nowrap">
                       <div className="font-black text-xs sm:text-base text-amber-600">
                         {product.price.toLocaleString()} <span className="text-[10px] font-bold text-slate-400">{settings.currency}</span>
                       </div>
@@ -580,44 +611,44 @@ export const POSGrid: React.FC = () => {
 
                     {/* Stepper / Action Button */}
                     {isOutOfStock ? (
-                      <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-xl border border-red-200">
+                      <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-xl border border-red-200 whitespace-nowrap">
                         Rupture
                       </span>
                     ) : inCartQty > 0 ? (
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1 sm:space-x-1.5">
                         <div className="flex items-center space-x-1 bg-amber-100 border border-amber-300 rounded-xl p-0.5">
                           <button
                             onClick={() => removeFromCart(product.id)}
-                            className="w-7 h-7 rounded-lg bg-white text-slate-900 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-xs transition cursor-pointer"
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white text-slate-900 hover:bg-red-500 hover:text-white flex items-center justify-center shadow-xs transition cursor-pointer"
                             title="Diminuer"
                           >
-                            <Minus className="w-3.5 h-3.5" />
+                            <Minus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           </button>
-                          <span className="w-6 text-center font-black text-xs text-amber-950">
+                          <span className="w-5 sm:w-6 text-center font-black text-xs text-amber-950">
                             {inCartQty}
                           </span>
                           <button
                             onClick={() => handleProductClick(product)}
-                            className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-600 flex items-center justify-center shadow-xs transition cursor-pointer"
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-600 flex items-center justify-center shadow-xs transition cursor-pointer"
                             title="Ajouter"
                           >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           </button>
                         </div>
                         <button
                           type="button"
                           onClick={() => setQuickQuantityProductModal(product)}
-                          className="w-7 h-7 rounded-xl bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-700 font-bold border border-slate-200 flex items-center justify-center transition cursor-pointer"
+                          className="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-700 font-bold border border-slate-200 flex items-center justify-center transition cursor-pointer"
                           title="Saisie directe grande quantité"
                         >
-                          <Calculator className="w-3.5 h-3.5" />
+                          <Calculator className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1 sm:space-x-1.5">
                         <button
                           onClick={() => handleProductClick(product)}
-                          className="py-1.5 px-3 rounded-xl bg-slate-900 hover:bg-amber-500 hover:text-slate-950 text-amber-400 font-bold text-xs shadow-xs transition flex items-center space-x-1 cursor-pointer"
+                          className="py-1 sm:py-1.5 px-2 sm:px-3 rounded-xl bg-slate-900 hover:bg-amber-500 hover:text-slate-950 text-amber-400 font-bold text-xs shadow-xs transition flex items-center space-x-1 cursor-pointer whitespace-nowrap"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Ajouter</span>
@@ -625,7 +656,7 @@ export const POSGrid: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setQuickQuantityProductModal(product)}
-                          className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-700 font-bold border border-slate-200 shadow-2xs transition flex items-center space-x-1 cursor-pointer"
+                          className="p-1 sm:p-1.5 rounded-xl bg-slate-100 hover:bg-slate-900 hover:text-amber-400 text-slate-700 font-bold border border-slate-200 shadow-2xs transition flex items-center space-x-1 cursor-pointer"
                           title="Saisie directe grande quantité"
                         >
                           <Calculator className="w-3.5 h-3.5 text-amber-600" />
@@ -679,6 +710,12 @@ export const POSGrid: React.FC = () => {
           onClose={() => setIsDisplaySettingsOpen(false)}
         />
       )}
+
+      {/* Barcode Camera Scanner Modal */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+      />
 
     </div>
   );

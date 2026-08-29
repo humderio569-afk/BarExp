@@ -56,27 +56,27 @@ export const CrateCalculatorModal: React.FC<CrateCalculatorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-5 text-slate-900 relative">
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full max-h-[92dvh] flex flex-col p-4 sm:p-6 shadow-2xl space-y-4 text-slate-900 relative my-auto overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="shrink-0 flex items-center justify-between border-b border-slate-200 pb-3">
           <div className="flex items-center space-x-2">
             <Calculator className="w-5 h-5 text-amber-600" />
             <div>
-              <h3 className="text-base font-black text-slate-900">Calculateur par Caisses & Cartons</h3>
-              <p className="text-[11px] text-slate-500">Calculez le coût unitaire d'achat et le stock facilement.</p>
+              <h3 className="text-sm sm:text-base font-black text-slate-900">Calculateur par Caisses & Cartons</h3>
+              <p className="text-[10px] sm:text-[11px] text-slate-500">Calculez le coût unitaire d'achat et le stock facilement.</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-full transition cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="space-y-4 text-xs">
+        <div className="flex-1 overflow-y-auto space-y-4 text-xs overscroll-contain pr-1">
           
           {/* Preset Buttons for Quick Units per crate */}
           <div>

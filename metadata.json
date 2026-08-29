@@ -1,8 +1,9 @@
 {
-  "name": "Lamadone Express",
-  "description": "Système de caisse tactile multi-secteurs (Imprimerie & Cyber, Pompe à Gaz, Librairie, Bar-Resto, Commerce) avec gestion des stocks, services, rapports certifiés DGI/Banques zéro hallucination et assistant IA Dona.",
+  "name": "BarExp",
+  "description": "BarExp - Système de gestion et caisse tactile multi-secteurs (Imprimerie & Cyber, Pompe à Gaz, Librairie, Bar-Resto, Commerce) avec gestion des stocks, services, rapports certifiés DGI/Banques zéro hallucination et assistant IA Dona.",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

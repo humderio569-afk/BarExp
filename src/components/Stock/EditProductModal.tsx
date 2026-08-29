@@ -4,7 +4,7 @@ import { Category, Product } from '../../types';
 import { PRESET_PRODUCT_IMAGES } from '../../data/presetImages';
 import { DEFAULT_UNITS, VARIETY_LABEL_PRESETS } from '../../data/unitsConfig';
 import { UnitManagerModal } from './UnitManagerModal';
-import { X, Edit3, Image, Upload, Check, Trash2, Calculator, Scale, Sparkles } from 'lucide-react';
+import { X, Edit3, Image, Upload, Check, Trash2, Calculator, Scale, Sparkles, ScanBarcode } from 'lucide-react';
 import { CrateCalculatorModal } from './CrateCalculatorModal';
 import { compressImageFile } from '../../utils/imageCompressor';
 
@@ -22,6 +22,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
 
   const [name, setName] = useState(product.name);
   const [category, setCategory] = useState<Category>(product.category);
+  const [barcode, setBarcode] = useState<string>(product.barcode || '');
   const [price, setPrice] = useState<string>(product.price.toString());
   const [costPrice, setCostPrice] = useState<string>(product.costPrice ? product.costPrice.toString() : '');
   const [stock, setStock] = useState<string>(product.stock.toString());
@@ -46,6 +47,17 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showCrateCalc, setShowCrateCalc] = useState(false);
   const [showUnitManager, setShowUnitManager] = useState(false);
+
+  const handleGenerateBarcode = () => {
+    // Generate standard 13-digit code: prefix 200 (internal use) + 9 digits + checksum
+    const raw = '200' + Math.floor(100000000 + Math.random() * 900000000).toString();
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(raw[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const checkDigit = (10 - (sum % 10)) % 10;
+    setBarcode(raw + checkDigit.toString());
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -92,6 +104,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
     updateProduct(product.id, {
       name: name.trim(),
       category,
+      barcode: barcode.trim() || undefined,
       price: numPrice,
       costPrice: numCost,
       stock: numStock,
@@ -114,14 +127,14 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
     .filter(Boolean);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 text-slate-900 my-8 relative">
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full max-h-[92dvh] flex flex-col p-4 sm:p-6 shadow-2xl text-slate-900 my-auto relative overflow-hidden">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="shrink-0 flex items-center justify-between border-b border-slate-200 pb-3 mb-2">
           <div className="flex items-center space-x-2">
             <Edit3 className="w-5 h-5 text-amber-600" />
-            <h3 className="text-lg font-black text-slate-900">Modifier le Produit</h3>
+            <h3 className="text-base sm:text-lg font-black text-slate-900">Modifier le Produit</h3>
           </div>
           <button
             onClick={onClose}
@@ -132,7 +145,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-4 text-xs overscroll-contain pr-1 flex flex-col">
+          <div className="space-y-4 flex-1">
           
           {/* Photo / Image Preview & Picker */}
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
@@ -216,18 +230,44 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
             )}
           </div>
 
-          {/* Nom du produit */}
-          <div>
-            <label className="block font-bold text-slate-900 mb-1">
-              Nom du Produit / Article *
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-medium p-2.5 rounded-xl focus:outline-none focus:border-amber-500 text-sm"
-            />
+          {/* Nom du produit & Code-Barres */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block font-bold text-slate-900 mb-1">
+                Nom du Produit / Article *
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-medium p-2.5 rounded-xl focus:outline-none focus:border-amber-500 text-sm"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-bold text-slate-900 text-xs flex items-center gap-1">
+                  <ScanBarcode className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Code-Barres</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateBarcode}
+                  className="text-[10px] text-amber-700 hover:text-amber-800 font-bold underline cursor-pointer"
+                  title="Générer un code-barres EAN-13 interne"
+                >
+                  Générer EAN
+                </button>
+              </div>
+              <input
+                type="text"
+                placeholder="ex: 200123456789"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono font-bold p-2.5 rounded-xl focus:outline-none focus:border-amber-500 text-xs"
+              />
+            </div>
           </div>
 
           {/* Catégorie & Unité */}
@@ -511,8 +551,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
             </button>
           </div>
 
+          </div>
+
           {/* Submit */}
-          <div className="pt-3 flex items-center justify-between border-t border-slate-200">
+          <div className="pt-3 flex items-center justify-between border-t border-slate-200 shrink-0 mt-2">
             <button
               type="button"
               onClick={() => {

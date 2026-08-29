@@ -29,7 +29,8 @@ import {
   Infinity as InfinityIcon,
   Zap,
   Sliders,
-  Sparkles
+  Sparkles,
+  ScanBarcode
 } from 'lucide-react';
 
 export const PlatformCompaniesView: React.FC = () => {
@@ -66,6 +67,7 @@ export const PlatformCompaniesView: React.FC = () => {
   const [formTaxRate, setFormTaxRate] = useState(0);
   const [formCashierName, setFormCashierName] = useState('Caisse Principale');
   const [formAutoApprove, setFormAutoApprove] = useState(true);
+  const [formAllowCameraScanner, setFormAllowCameraScanner] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -117,6 +119,7 @@ export const PlatformCompaniesView: React.FC = () => {
     setFormTaxRate(0);
     setFormCashierName('Caisse Principale');
     setFormAutoApprove(true);
+    setFormAllowCameraScanner(true);
 
     // Reset Subscription with global defaults ($100/yr annual by default)
     setFormPlanType('annual');
@@ -151,6 +154,7 @@ export const PlatformCompaniesView: React.FC = () => {
     setFormTaxRate(comp.taxRate || 0);
     setFormCashierName(comp.cashierName || 'Caisse Principale');
     setFormAutoApprove(comp.autoApprovePreRegistered !== false);
+    setFormAllowCameraScanner(comp.allowCameraScanner ?? false);
 
     // Populate subscription values
     const sub = comp.subscription;
@@ -236,6 +240,7 @@ export const PlatformCompaniesView: React.FC = () => {
           taxRate: formTaxRate,
           cashierName: formCashierName.trim(),
           autoApprovePreRegistered: formAutoApprove,
+          allowCameraScanner: formAllowCameraScanner,
           subscription: subscriptionData,
           status: formSubStatus === 'suspended' ? 'suspended' : 'active',
         });
@@ -252,6 +257,7 @@ export const PlatformCompaniesView: React.FC = () => {
           taxRate: formTaxRate,
           cashierName: formCashierName.trim(),
           autoApprovePreRegistered: formAutoApprove,
+          allowCameraScanner: formAllowCameraScanner,
           subscription: subscriptionData,
           status: formSubStatus === 'suspended' ? 'suspended' : 'active',
         });
@@ -589,6 +595,24 @@ export const PlatformCompaniesView: React.FC = () => {
                               </span>
                             )}
 
+                            {/* Camera Scanner Permission Pill */}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const nextState = !(company.allowCameraScanner ?? false);
+                                await updateCompany(company.id, { allowCameraScanner: nextState });
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border transition cursor-pointer active:scale-95 ${
+                                company.allowCameraScanner
+                                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'
+                              }`}
+                              title="Cliquer pour activer / désactiver le scanner de code-barres par caméra pour cet établissement"
+                            >
+                              <ScanBarcode className={`w-3.5 h-3.5 ${company.allowCameraScanner ? 'text-emerald-600' : 'text-slate-400'}`} />
+                              <span>Scanner Caméra : {company.allowCameraScanner ? 'Autorisé' : 'Verrouillé'}</span>
+                            </button>
+
                             {/* Quota Policy Badge */}
                             {quotaPolicy.chargeOverage ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md">
@@ -878,6 +902,37 @@ export const PlatformCompaniesView: React.FC = () => {
                     onChange={(e) => setFormAddress(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
+                </div>
+              </div>
+
+              {/* Super Admin Hardware & Feature Gate: Camera Scanner */}
+              <div className="p-3.5 bg-slate-900 rounded-2xl border border-slate-800 text-white space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ScanBarcode className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <h4 className="text-xs font-black text-white">
+                        Scanner Code-Barres Caméra (POS Direct)
+                      </h4>
+                      <p className="text-[10px] text-slate-400">
+                        Permet aux caissiers de cette entreprise d'utiliser la caméra de leur smartphone / tablette / PC pour scanner et ajouter directement les produits au panier.
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                    <input
+                      type="checkbox"
+                      checked={formAllowCameraScanner}
+                      onChange={(e) => setFormAllowCameraScanner(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-amber-400 font-bold">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Droit exclusif Super-Administrateur BarExp</span>
                 </div>
               </div>
 

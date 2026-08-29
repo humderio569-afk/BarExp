@@ -13,8 +13,10 @@ import { AdminPanel } from './components/Admin/AdminPanel';
 import { DonaChat } from './components/Chat/DonaChat';
 import { GoogleLoginModal } from './components/Auth/GoogleLoginModal';
 import { PendingApprovalScreen } from './components/Auth/PendingApprovalScreen';
-import { PWAInstallBanner } from './components/PWA/PWAInstallBanner';
+import { UnassociatedUserScreen } from './components/Auth/UnassociatedUserScreen';
+import { TrialExpiredScreen } from './components/Billing/TrialExpiredScreen';
 import { SuperAdminLayout } from './components/SuperAdmin/SuperAdminLayout';
+import { ToastContainer } from './components/Common/ToastContainer';
 
 const MainContent: React.FC = () => {
   const { activeTab, isAdmin } = useBar();
@@ -62,22 +64,37 @@ const MainContent: React.FC = () => {
 };
 
 const AppShell: React.FC = () => {
-  const { currentUser, authLoading, activeTab, isSuperAdmin, isImpersonating } = useBar();
+  const { 
+    currentUser, 
+    authLoading, 
+    activeTab, 
+    isSuperAdmin, 
+    isImpersonating,
+    isUnassociatedUser,
+    activeCompanyTrialInfo,
+  } = useBar();
 
   if (authLoading) {
     return (
       <div className="min-h-screen w-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-white">
         <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold tracking-wide text-amber-400">Initialisation de la session BarExpress...</p>
+        <p className="text-sm font-bold tracking-wide text-amber-400">Initialisation de la session BarExp...</p>
         <p className="text-xs text-slate-400 mt-1">Connexion à Firebase Firestore & Google Auth</p>
       </div>
     );
   }
 
+  // Not logged in -> Clean simplified Google Sign-in & Company Code modal
   if (!currentUser) {
     return <GoogleLoginModal />;
   }
 
+  // Brand new Google user not attached to any company yet -> Onboarding / Choice screen
+  if (isUnassociatedUser) {
+    return <UnassociatedUserScreen />;
+  }
+
+  // Account pending approval by company admin or super admin
   if (currentUser.status === 'pending' || currentUser.status === 'rejected' || currentUser.status === 'suspended') {
     return <PendingApprovalScreen />;
   }
@@ -87,13 +104,17 @@ const AppShell: React.FC = () => {
     return <SuperAdminLayout />;
   }
 
-  // Bar Enterprise Interface
+  // Active Company Trial / Payment Verification gate
+  if (!activeCompanyTrialInfo.isOperationalAccessAllowed) {
+    return <TrialExpiredScreen />;
+  }
+
+  // Bar Enterprise Operational Interface
   const isChatActive = activeTab === 'chat';
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-50 font-sans text-slate-900 overflow-hidden select-none">
       {!isChatActive && <Navbar />}
-      {!isChatActive && <PWAInstallBanner />}
       <MainContent />
       {!isChatActive && <MobileNav />}
     </div>
@@ -105,6 +126,7 @@ export default function App() {
     <GlobalErrorBoundary>
       <BarProvider>
         <AppShell />
+        <ToastContainer />
       </BarProvider>
     </GlobalErrorBoundary>
   );

@@ -386,8 +386,8 @@ export const EnterpriseReportModal: React.FC<EnterpriseReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl overflow-hidden text-slate-900 relative">
+    <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 animate-fadeIn overflow-y-auto overscroll-contain">
+      <div className="bg-white border border-slate-200 rounded-3xl max-w-5xl w-full max-h-[94dvh] flex flex-col shadow-2xl overflow-hidden text-slate-900 relative my-auto">
         
         {/* Modal Header Controls (Hidden during print) */}
         <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between shrink-0 no-print">

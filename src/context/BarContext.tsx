@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Product, CartItem, Sale, Expense, BarTab, BarSettings, ActiveTab, Category, CategoryItem, StockLog, PaymentMethod, OfflineSyncQueueItem, AppUser, UserRole, UserStatus, UserPermissions, SUPER_ADMIN_EMAIL, AuditLog, AuditAction, Company, PreRegisteredEmployee, BusinessSector } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_EXPENSES, INITIAL_SETTINGS, INITIAL_SALES, CATEGORIES_CONFIG, INITIAL_COMPANIES, INITIAL_PRE_REGISTRATIONS } from '../data/initialData';
+import { Product, CartItem, Sale, Expense, BarTab, BarSettings, ActiveTab, Category, CategoryItem, StockLog, PaymentMethod, OfflineSyncQueueItem, AppUser, UserRole, UserStatus, UserPermissions, SUPER_ADMIN_EMAIL, AuditLog, AuditAction, Company, PreRegisteredEmployee, BusinessSector, ManualPaymentMethodConfig, ManualPaymentProof, CompanySubscription } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_EXPENSES, INITIAL_SETTINGS, INITIAL_SALES, CATEGORIES_CONFIG, INITIAL_COMPANIES, INITIAL_PRE_REGISTRATIONS, INITIAL_MANUAL_PAYMENT_PROOFS } from '../data/initialData';
 import { SECTOR_PRESETS } from '../data/sectorPresets';
 import { collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, getDoc, query, where } from 'firebase/firestore';
 import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -8,6 +8,8 @@ import { db, auth, handleFirestoreError, OperationType, cleanForFirestore } from
 import { QuotaTracker } from '../services/quotaTracker';
 import { safeSetItem, safeGetItem, safeRemoveItem, requestPersistentStorage } from '../utils/storage';
 import { recordApprovedUser, removeApprovedUserRecord, findApprovedRecord, isUserApprovedPermanently } from '../utils/authPersistence';
+import { storeInVault } from '../utils/storageQuota';
+import { sendSmartNotification } from '../utils/notificationService';
 
 export interface PlatformStats {
   totalCompanies: number;
@@ -136,6 +138,26 @@ interface BarContextType {
   clearAndResetData: (mode: 'transactions_only' | 'complete_reset') => Promise<void>;
   exportBackup: () => void;
   importBackup: (jsonString: string) => boolean;
+
+  // Manual Payments & 14-Day Free Trial Flow
+  manualPaymentMethods: ManualPaymentMethodConfig[];
+  manualPaymentProofs: ManualPaymentProof[];
+  updateManualPaymentMethod: (id: string, updates: Partial<ManualPaymentMethodConfig>) => Promise<void>;
+  submitManualPaymentProof: (proofData: Omit<ManualPaymentProof, 'id' | 'submittedAt' | 'status'>) => Promise<ManualPaymentProof>;
+  approveManualPaymentProof: (proofId: string) => Promise<void>;
+  disapproveManualPaymentProof: (proofId: string, reason: string) => Promise<void>;
+  registerNewCompanyWithTrial: (data: { name: string; managerName: string; phone: string; currency?: string; businessSector?: BusinessSector; address?: string }) => Promise<Company>;
+  requestJoinCompanyWithCode: (companyCode: string) => Promise<{ success: boolean; message: string }>;
+  activeCompanyTrialInfo: {
+    isTrial: boolean;
+    trialDaysRemaining: number;
+    isTrialExpired: boolean;
+    hasPendingPaymentProof: boolean;
+    hasDisapprovedPaymentProof: boolean;
+    latestPaymentProof: ManualPaymentProof | null;
+    isOperationalAccessAllowed: boolean;
+  };
+  isUnassociatedUser: boolean;
 }
 
 const BarContext = createContext<BarContextType | undefined>(undefined);
@@ -155,6 +177,8 @@ const STORAGE_KEYS = {
   COMPANIES: 'barexpress_companies',
   PRE_REGISTRATIONS: 'barexpress_preregistrations',
   IMPERSONATED_COMPANY_ID: 'barexpress_impersonated_company_id',
+  MANUAL_PAYMENTS: 'barexpress_manual_payment_proofs',
+  PAYMENT_METHODS: 'barexpress_manual_payment_methods',
 };
 
 const DEFAULT_SUPER_ADMIN_USER: AppUser = {
@@ -302,6 +326,44 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  const [manualPaymentProofs, setManualPaymentProofs] = useState<ManualPaymentProof[]>(() => {
+    try {
+      const saved = safeGetItem(STORAGE_KEYS.MANUAL_PAYMENTS);
+      return saved ? JSON.parse(saved) : INITIAL_MANUAL_PAYMENT_PROOFS;
+    } catch {
+      return INITIAL_MANUAL_PAYMENT_PROOFS;
+    }
+  });
+
+  const [manualPaymentMethods, setManualPaymentMethods] = useState<ManualPaymentMethodConfig[]>(() => {
+    try {
+      const saved = safeGetItem(STORAGE_KEYS.PAYMENT_METHODS);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return (
+      settings.platformBilling?.manualPaymentMethods || [
+        {
+          id: 'moncash',
+          name: 'MonCash',
+          accountNumber: '+509 3700-1122',
+          accountName: 'BarExp Platform / Direction',
+          instructions: "Envoyez le montant exact sur ce numéro MonCash puis téléversez la capture d'écran du SMS de confirmation reçu de la Digicel.",
+          active: true,
+          logoType: 'moncash',
+        },
+        {
+          id: 'natcash',
+          name: 'NatCash',
+          accountNumber: '+509 4812-3344',
+          accountName: 'BarExp Platform / Trésorerie',
+          instructions: "Effectuez le transfert vers ce numéro NatCash Natcom puis téléversez la capture d'écran du reçu de confirmation avec le numéro de transaction.",
+          active: true,
+          logoType: 'natcash',
+        },
+      ]
+    );
+  });
+
   const [impersonatedCompanyId, setImpersonatedCompanyId] = useState<string | null>(() => {
     return safeGetItem(STORAGE_KEYS.IMPERSONATED_COMPANY_ID) || null;
   });
@@ -328,23 +390,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTable, setActiveTable] = useState<string>('Comptoir');
 
-  // User Auth & Permissions State - Instant offline-first hydration
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
-    try {
-      const isExplicitlyLoggedOut = safeGetItem('barexpress_explicit_logout') === 'true';
-      if (isExplicitlyLoggedOut) {
-        return null;
-      }
-      const saved = safeGetItem(STORAGE_KEYS.CACHED_USER);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && (parsed.uid || parsed.email)) return parsed;
-      }
-      return DEFAULT_SUPER_ADMIN_USER;
-    } catch {
-      return DEFAULT_SUPER_ADMIN_USER;
-    }
-  });
+  // User Auth & Permissions State - Strict auth verification on startup
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [allUsers, setAllUsers] = useState<AppUser[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.USERS);
@@ -353,7 +400,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return [];
     }
   });
-  const [authLoading, setAuthLoading] = useState<boolean>(false);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
 
   // Sync companies & preRegistrations to LocalStorage
   useEffect(() => {
@@ -363,6 +410,14 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     safeSetItem(STORAGE_KEYS.PRE_REGISTRATIONS, JSON.stringify(preRegistrations));
   }, [preRegistrations]);
+
+  useEffect(() => {
+    safeSetItem(STORAGE_KEYS.MANUAL_PAYMENTS, JSON.stringify(manualPaymentProofs));
+  }, [manualPaymentProofs]);
+
+  useEffect(() => {
+    safeSetItem(STORAGE_KEYS.PAYMENT_METHODS, JSON.stringify(manualPaymentMethods));
+  }, [manualPaymentMethods]);
 
   useEffect(() => {
     if (impersonatedCompanyId) {
@@ -462,6 +517,94 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalStaffCount,
     };
   }, [companies, sales, allUsers, preRegistrations]);
+
+  // Is this user logged in via Google with no company attached yet?
+  const isUnassociatedUser = useMemo<boolean>(() => {
+    if (!currentUser) return false;
+    if (isSuperAdmin) return false;
+    // Check if user already has an explicit company assigned
+    if (currentUser.companyId || currentUser.companyCode) return false;
+    // Check if user is the adminEmail of any company
+    const matchesAdminEmail = companies.some(c => c.adminEmail?.toLowerCase() === currentUser.email?.toLowerCase());
+    if (matchesAdminEmail) return false;
+    // Check if user is in pre-registrations
+    const matchesPreReg = preRegistrations.some(p => p.email?.toLowerCase() === currentUser.email?.toLowerCase());
+    if (matchesPreReg) return false;
+    return true;
+  }, [currentUser, isSuperAdmin, companies, preRegistrations]);
+
+  // Active Company Trial and Payment Status Info
+  const activeCompanyTrialInfo = useMemo(() => {
+    if (!activeCompany) {
+      return {
+        isTrial: false,
+        trialDaysRemaining: 14,
+        isTrialExpired: false,
+        hasPendingPaymentProof: false,
+        hasDisapprovedPaymentProof: false,
+        latestPaymentProof: null,
+        isOperationalAccessAllowed: true,
+      };
+    }
+
+    // Super Administrator in non-impersonating mode always has complete access
+    if (isSuperAdmin && !isImpersonating) {
+      return {
+        isTrial: false,
+        trialDaysRemaining: 14,
+        isTrialExpired: false,
+        hasPendingPaymentProof: false,
+        hasDisapprovedPaymentProof: false,
+        latestPaymentProof: null,
+        isOperationalAccessAllowed: true,
+      };
+    }
+
+    const sub = activeCompany.subscription;
+    const isTrial = sub?.status === 'trial';
+    
+    let trialDaysRemaining = 14;
+    let isTrialExpired = false;
+
+    if (isTrial) {
+      const startDate = sub?.startDate ? new Date(sub.startDate).getTime() : new Date(activeCompany.createdAt).getTime();
+      const expiryDate = sub?.expiryDate ? new Date(sub.expiryDate).getTime() : (startDate + 14 * 24 * 60 * 60 * 1000);
+      const now = Date.now();
+      const diffMs = expiryDate - now;
+      trialDaysRemaining = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+      isTrialExpired = diffMs <= 0;
+    } else if (sub?.status === 'expired') {
+      isTrialExpired = true;
+      trialDaysRemaining = 0;
+    }
+
+    // Retrieve company's manual payment proofs
+    const companyProofs = manualPaymentProofs.filter(p => p.companyId === activeCompany.id || p.companyCode === activeCompany.code);
+    const latestProof = companyProofs.length > 0
+      ? [...companyProofs].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0]
+      : null;
+
+    const hasPendingPaymentProof = latestProof?.status === 'pending';
+    const hasDisapprovedPaymentProof = latestProof?.status === 'disapproved';
+    const isApprovedPayment = latestProof?.status === 'approved' || sub?.status === 'active' || sub?.status === 'lifetime';
+
+    // Access authorization:
+    // 1. Trial is active (trialDaysRemaining > 0) -> ALLOWED
+    // 2. Subscription is active/lifetime or latest payment approved -> ALLOWED
+    // 3. Trial expired, but customer submitted payment proof (status === 'pending') -> PROVISIONAL ACCESS ALLOWED!
+    // 4. Trial expired and no proof submitted OR proof is disapproved -> RESTRICTED
+    const isOperationalAccessAllowed = (!isTrialExpired) || isApprovedPayment || hasPendingPaymentProof;
+
+    return {
+      isTrial,
+      trialDaysRemaining,
+      isTrialExpired,
+      hasPendingPaymentProof,
+      hasDisapprovedPaymentProof,
+      latestPaymentProof: latestProof,
+      isOperationalAccessAllowed,
+    };
+  }, [activeCompany, isSuperAdmin, isImpersonating, manualPaymentProofs]);
 
   // Initialize Persistent Storage quota for iOS Safari, Android Chrome, and Desktop
   useEffect(() => {
@@ -770,20 +913,22 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setCurrentUser(fallbackUser);
         }
       } else {
-        // If Firebase Auth has no active user, check if user explicitly logged out
+        // If Firebase Auth has no active user on this device
         const isExplicitlyLoggedOut = safeGetItem('barexpress_explicit_logout') === 'true';
         if (isExplicitlyLoggedOut) {
           setCurrentUser(null);
+          safeRemoveItem(STORAGE_KEYS.CACHED_USER);
           setAuthLoading(false);
           return;
         }
 
-        // Check if we have a locally cached user session
+        // Check if there is an active local PIN employee session
         const cached = safeGetItem(STORAGE_KEYS.CACHED_USER);
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            if (parsed && (parsed.uid || parsed.email)) {
+            // Only allow PIN session if explicitly verified
+            if (parsed && typeof parsed.uid === 'string' && parsed.uid.startsWith('pin_')) {
               setCurrentUser(parsed);
               setAuthLoading(false);
               return;
@@ -791,8 +936,9 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           } catch {}
         }
         
-        // If no cached session and not explicitly logged out, default to Super Admin
-        setCurrentUser(DEFAULT_SUPER_ADMIN_USER);
+        // No valid session on this device -> strictly require login
+        safeRemoveItem(STORAGE_KEYS.CACHED_USER);
+        setCurrentUser(null);
       }
       setAuthLoading(false);
     });
@@ -804,7 +950,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // Multi-Tenancy Actions
-  const createCompany = async (companyData: Omit<Company, 'id' | 'createdAt' | 'status'> & { code?: string; status?: 'active' | 'suspended' }) => {
+  const createCompany = async (companyData: Omit<Company, 'id' | 'createdAt' | 'status' | 'code'> & { code?: string; status?: 'active' | 'suspended' }) => {
     let uniqueCode = (companyData.code || '').trim().toUpperCase();
     if (!uniqueCode || uniqueCode.length !== 8) {
       const prefix = (companyData.name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase()) || 'BAR';
@@ -1221,6 +1367,343 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     await addAuditLog('user_updated', `Connexion rapide par code PIN de ${matchingStaff.name} sur ${verified.name}`);
     return { success: true, user: sessionUser };
+  };
+
+  // Register New Company With 14-Day Free Trial
+  const registerNewCompanyWithTrial = async (data: {
+    name: string;
+    managerName: string;
+    phone: string;
+    currency?: string;
+    businessSector?: BusinessSector;
+    address?: string;
+  }): Promise<Company> => {
+    if (!currentUser?.email) {
+      throw new Error("Vous devez être connecté avec votre compte Google pour créer une entreprise.");
+    }
+
+    const now = new Date();
+    const expiryDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const defaultAnnualPrice = settings.platformBilling?.defaultAnnualPrice ?? 100;
+    const defaultQuotaPolicy = settings.platformBilling?.globalQuotaPolicy ?? {
+      chargeOverage: false,
+      maxTransactionsPerMonth: 5000,
+      maxAiQueriesPerMonth: 500,
+      overageFeePer1000Tx: 5,
+      overageFeePer100AiQueries: 2,
+    };
+
+    const newCompany = await createCompany({
+      name: data.name.trim(),
+      managerName: (data.managerName || currentUser.displayName || 'Gérant').trim(),
+      adminEmail: currentUser.email.trim().toLowerCase(),
+      phone: data.phone.trim(),
+      currency: data.currency || 'G',
+      businessSector: data.businessSector || 'bar_restaurant',
+      address: data.address?.trim() || '',
+      status: 'active',
+      subscription: {
+        planType: 'annual',
+        status: 'trial',
+        customPrice: defaultAnnualPrice,
+        currency: 'USD',
+        startDate: now.toISOString(),
+        expiryDate: expiryDate,
+        autoRenew: true,
+        quotaPolicy: defaultQuotaPolicy,
+        notes: `Création de compte entreprise avec période d'essai gratuit de 14 jours accordée le ${now.toLocaleDateString('fr-FR')}`,
+      },
+    });
+
+    // Automatically promote current Google user to Admin for this company
+    const updatedUser: AppUser = {
+      ...currentUser,
+      role: 'admin',
+      status: 'approved',
+      companyId: newCompany.id,
+      companyCode: newCompany.code,
+      companyName: newCompany.name,
+      permissions: {
+        canAccessPOS: true,
+        canAccessStock: true,
+        canManageStock: true,
+        canViewCostPrices: true,
+        canAccessExpenses: true,
+        canAccessReports: true,
+        canAccessSettings: true,
+        canAccessChat: true,
+        canManageUsers: true,
+      },
+      approvedBy: 'Auto-Trial',
+      approvedAt: now.toISOString(),
+      lastLoginAt: now.toISOString(),
+    };
+
+    setCurrentUser(updatedUser);
+    recordApprovedUser(updatedUser);
+    safeSetItem(STORAGE_KEYS.CACHED_USER, JSON.stringify(updatedUser));
+
+    try {
+      await setDoc(doc(db, 'users', updatedUser.uid), cleanForFirestore(updatedUser));
+    } catch (e) {
+      console.warn('Could not save promoted user to Firestore:', e);
+    }
+
+    setSettings(prev => ({
+      ...prev,
+      barName: newCompany.name,
+      tagline: newCompany.tagline || prev.tagline,
+      currency: newCompany.currency || prev.currency,
+      companyCode: newCompany.code,
+      phone: newCompany.phone || prev.phone,
+      address: newCompany.address || prev.address,
+    }));
+
+    await addAuditLog('company_created', `Nouvelle entreprise créée : "${newCompany.name}" (${newCompany.code}) avec 14 jours d'essai gratuit par ${currentUser.email}.`);
+
+    return newCompany;
+  };
+
+  // Request to Join an Existing Company using 8-character Company Code
+  const requestJoinCompanyWithCode = async (companyCode: string): Promise<{ success: boolean; message: string }> => {
+    if (!currentUser) {
+      return { success: false, message: "Vous devez être connecté avec votre compte Google." };
+    }
+
+    const cleanCode = companyCode.trim().toUpperCase();
+    const verified = await verifyCompanyCode(cleanCode);
+    if (!verified) {
+      return { success: false, message: `Aucun établissement trouvé avec le code "${cleanCode}". Vérifiez le code avec votre gérant.` };
+    }
+
+    if (verified.status === 'suspended') {
+      return { success: false, message: `L'établissement "${verified.name}" est actuellement suspendu. Contactez votre gérant.` };
+    }
+
+    // Submit pre-registration request for this company
+    await preRegisterEmployee({
+      companyId: verified.id,
+      companyCode: verified.code,
+      name: currentUser.displayName || currentUser.email.split('@')[0],
+      email: currentUser.email,
+      role: 'employee',
+      permissions: {
+        canAccessPOS: true,
+        canAccessStock: true,
+        canManageStock: false,
+        canViewCostPrices: false,
+        canAccessExpenses: false,
+        canAccessReports: false,
+        canAccessSettings: false,
+        canAccessChat: true,
+        canManageUsers: false,
+      },
+    });
+
+    const pendingUser: AppUser = {
+      ...currentUser,
+      companyId: verified.id,
+      companyCode: verified.code,
+      companyName: verified.name,
+      role: 'employee',
+      status: 'pending',
+    };
+
+    setCurrentUser(pendingUser);
+    safeSetItem(STORAGE_KEYS.CACHED_USER, JSON.stringify(pendingUser));
+
+    try {
+      await setDoc(doc(db, 'users', pendingUser.uid), cleanForFirestore(pendingUser));
+    } catch (e) {
+      console.warn('Could not save pending user to Firestore:', e);
+    }
+
+    await addAuditLog(
+      'employee_preregistered',
+      `Demande d'adhésion envoyée par ${currentUser.email} pour l'entreprise "${verified.name}" (${verified.code}). En attente de validation par l'administrateur de l'entreprise.`
+    );
+
+    return {
+      success: true,
+      message: `Votre demande a été transmise à l'administrateur de l'établissement "${verified.name}". Vous recevrez l'accès dès son approbation.`,
+    };
+  };
+
+  // Submit Manual Payment Proof (MonCash / NatCash) with photo
+  const submitManualPaymentProof = async (proofData: Omit<ManualPaymentProof, 'id' | 'submittedAt' | 'status'>): Promise<ManualPaymentProof> => {
+    const newProof: ManualPaymentProof = {
+      ...proofData,
+      id: `proof_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      submittedAt: new Date().toISOString(),
+      status: 'pending',
+    };
+
+    setManualPaymentProofs(prev => [newProof, ...prev.filter(p => p.id !== newProof.id)]);
+
+    try {
+      await setDoc(doc(db, 'manual_payment_proofs', newProof.id), cleanForFirestore(newProof));
+    } catch (err) {
+      console.warn('Could not persist payment proof to Firestore:', err);
+    }
+
+    await addAuditLog(
+      'subscription_updated',
+      `Preuve de paiement soumise par "${newProof.companyName}" (${newProof.companyCode}) - ${newProof.paymentMethodName} : ${newProof.amount} ${newProof.currency} (Réf: ${newProof.transactionReference}). Accès provisoire débloqué.`
+    );
+
+    return newProof;
+  };
+
+  // Super Admin: Approve Manual Payment Proof
+  const approveManualPaymentProof = async (proofId: string) => {
+    if (!isSuperAdmin) {
+      throw new Error("Seul le Super Administrateur peut valider un paiement.");
+    }
+
+    const proof = manualPaymentProofs.find(p => p.id === proofId);
+    if (!proof) return;
+
+    const now = new Date();
+    const updatedProof: ManualPaymentProof = {
+      ...proof,
+      status: 'approved',
+      reviewedAt: now.toISOString(),
+      reviewedBy: currentUser?.email || SUPER_ADMIN_EMAIL,
+      disapprovalReason: undefined,
+    };
+
+    setManualPaymentProofs(prev => prev.map(p => p.id === proofId ? updatedProof : p));
+
+    try {
+      await setDoc(doc(db, 'manual_payment_proofs', proofId), cleanForFirestore(updatedProof), { merge: true });
+    } catch (err) {
+      console.warn('Could not update payment proof in Firestore:', err);
+    }
+
+    // Activate and extend the company's subscription
+    const targetComp = companies.find(c => c.id === proof.companyId || c.code === proof.companyCode);
+    if (targetComp) {
+      const isAnnual = proof.planType === 'annual';
+      const isMonthly = proof.planType === 'monthly';
+      const isLifetime = proof.planType === 'lifetime';
+
+      const durationDays = isLifetime ? undefined : (isAnnual ? 365 : (isMonthly ? 30 : 365));
+      const expiryDate = durationDays ? new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000).toISOString() : undefined;
+
+      const updatedSub: CompanySubscription = {
+        planType: proof.planType,
+        status: isLifetime ? 'lifetime' : 'active',
+        customPrice: proof.amount,
+        currency: proof.currency,
+        startDate: now.toISOString(),
+        expiryDate,
+        autoRenew: !isLifetime,
+        paymentMethod: proof.paymentMethodName,
+        notes: `Paiement ${proof.paymentMethodName} (${proof.transactionReference}) approuvé par le Super Admin le ${now.toLocaleDateString('fr-FR')}`,
+        quotaPolicy: targetComp.subscription?.quotaPolicy || {
+          chargeOverage: false,
+          maxTransactionsPerMonth: 5000,
+          maxAiQueriesPerMonth: 500,
+          overageFeePer1000Tx: 5,
+          overageFeePer100AiQueries: 2,
+        },
+      };
+
+      await updateCompany(targetComp.id, {
+        subscription: updatedSub,
+        status: 'active',
+      });
+    }
+
+    await addAuditLog(
+      'subscription_updated',
+      `Paiement ${proof.paymentMethodName} approuvé pour l'établissement "${proof.companyName}" (${proof.companyCode}) par le Super Admin.`
+    );
+  };
+
+  // Super Admin: Disapprove Manual Payment Proof with custom reason
+  const disapproveManualPaymentProof = async (proofId: string, reason: string) => {
+    if (!isSuperAdmin) {
+      throw new Error("Seul le Super Administrateur peut désapprouver un paiement.");
+    }
+    const cleanReason = reason.trim();
+    if (!cleanReason) {
+      throw new Error("Veuillez obligatoirement renseigner le motif de la désapprobation.");
+    }
+
+    const proof = manualPaymentProofs.find(p => p.id === proofId);
+    if (!proof) return;
+
+    const now = new Date();
+    const updatedProof: ManualPaymentProof = {
+      ...proof,
+      status: 'disapproved',
+      reviewedAt: now.toISOString(),
+      reviewedBy: currentUser?.email || SUPER_ADMIN_EMAIL,
+      disapprovalReason: cleanReason,
+    };
+
+    setManualPaymentProofs(prev => prev.map(p => p.id === proofId ? updatedProof : p));
+
+    try {
+      await setDoc(doc(db, 'manual_payment_proofs', proofId), cleanForFirestore(updatedProof), { merge: true });
+    } catch (err) {
+      console.warn('Could not update payment proof in Firestore:', err);
+    }
+
+    // Set company subscription to expired / suspended if not active
+    const targetComp = companies.find(c => c.id === proof.companyId || c.code === proof.companyCode);
+    if (targetComp && targetComp.subscription) {
+      await updateCompany(targetComp.id, {
+        subscription: {
+          ...targetComp.subscription,
+          status: 'expired',
+          notes: `Paiement rejeté le ${now.toLocaleDateString('fr-FR')} : ${cleanReason}`,
+        }
+      });
+    }
+
+    await addAuditLog(
+      'subscription_updated',
+      `Paiement ${proof.paymentMethodName} pour "${proof.companyName}" rejeté par le Super Admin. Motif : ${cleanReason}`
+    );
+  };
+
+  // Super Admin: Configure Payment Methods (Name, Phone number, Instructions, Active toggle)
+  const updateManualPaymentMethod = async (id: string, updates: Partial<ManualPaymentMethodConfig>) => {
+    if (!isSuperAdmin) {
+      throw new Error("Seul le Super Administrateur peut configurer les moyens de paiement.");
+    }
+
+    setManualPaymentMethods(prev => {
+      const exists = prev.some(m => m.id === id);
+      if (exists) {
+        return prev.map(m => m.id === id ? { ...m, ...updates } : m);
+      }
+      return [...prev, { id, name: id, accountNumber: '', accountName: '', instructions: '', active: true, ...updates } as ManualPaymentMethodConfig];
+    });
+
+    const updatedList = manualPaymentMethods.map(m => m.id === id ? { ...m, ...updates } : m);
+
+    updateSettings({
+      platformBilling: {
+        defaultAnnualPrice: settings.platformBilling?.defaultAnnualPrice ?? 100,
+        defaultMonthlyPrice: settings.platformBilling?.defaultMonthlyPrice ?? 15,
+        defaultLifetimePrice: settings.platformBilling?.defaultLifetimePrice ?? 450,
+        currency: settings.platformBilling?.currency ?? 'USD',
+        availablePlans: settings.platformBilling?.availablePlans ?? { monthly: true, annual: true, lifetime: true },
+        globalQuotaPolicy: settings.platformBilling?.globalQuotaPolicy ?? {
+          chargeOverage: false,
+          maxTransactionsPerMonth: 5000,
+          maxAiQueriesPerMonth: 500,
+          overageFeePer1000Tx: 5,
+          overageFeePer100AiQueries: 2,
+        },
+        manualPaymentMethods: updatedList,
+      }
+    });
+
+    await addAuditLog('platform_pricing_updated', `Mise à jour des paramètres du moyen de paiement "${id}" par le Super Admin.`);
   };
 
   // Auth & Admin Actions
@@ -1917,6 +2400,16 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLastSyncedAt(now);
         setIsSyncing(false);
         setIsServerReachable(true);
+
+        if (syncedIds.length > 0) {
+          sendSmartNotification({
+            id: 'sync-complete',
+            title: 'Synchronisation Réussie',
+            message: `${syncedIds.length} vente(s) synchronisée(s) avec le serveur principal.`,
+            type: 'success',
+          });
+        }
+
         return { success: true, syncedCount: syncedIds.length };
       } else {
         setIsSyncing(false);
@@ -1948,16 +2441,6 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Listen to messages from Service Worker
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'TRIGGER_OFFLINE_SYNC') {
-        syncOfflineData();
-      }
-    };
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', handleMessage);
-    }
-
     // Periodic check every 25 seconds
     const interval = setInterval(() => {
       checkServerHealth();
@@ -1973,9 +2456,6 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.removeEventListener('message', handleMessage);
-      }
       clearInterval(interval);
     };
   }, [checkServerHealth, offlineQueue.length, syncOfflineData]);
@@ -2122,13 +2602,16 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
+    // Save sale to high-capacity 3GB offline vault
+    storeInVault('sales_vault', newSale).catch(() => {});
+
     // Record sale in Firestore & local state
     setSales(prev => [newSale, ...prev]);
     setDoc(doc(db, 'sales', newSale.id), cleanForFirestore(newSale)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `sales/${newSale.id}`);
     });
 
-    // Update product stock in Firestore
+    // Update product stock in Firestore & trigger throttled alerts if low
     cart.forEach(item => {
       const prod = products.find(p => p.id === item.product.id);
       if (prod) {
@@ -2136,6 +2619,22 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setDoc(doc(db, 'products', prod.id), cleanForFirestore({ ...prod, stock: newQty })).catch(err => {
           handleFirestoreError(err, OperationType.WRITE, `products/${prod.id}`);
         });
+
+        if (newQty <= 0) {
+          sendSmartNotification({
+            id: `out-stock-${prod.id}`,
+            title: `Rupture de Stock : ${prod.name}`,
+            message: `Le stock de ${prod.name} est maintenant à 0 ${prod.unit}(s).`,
+            type: 'error',
+          });
+        } else if (newQty <= prod.minStockAlert) {
+          sendSmartNotification({
+            id: `low-stock-${prod.id}`,
+            title: `Stock Faible : ${prod.name}`,
+            message: `Il ne reste que ${newQty} ${prod.unit}(s) en réserve.`,
+            type: 'warning',
+          });
+        }
       }
     });
 
@@ -2157,6 +2656,12 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         status: 'pending',
       };
       setOfflineQueue(prev => [queueItem, ...prev]);
+      sendSmartNotification({
+        id: `sale-off-${newSale.id}`,
+        title: 'Vente Hors-Ligne Validée',
+        message: `Ticket #${receiptNum} enregistré en local (Coffre 3 Go actif).`,
+        type: 'info',
+      });
     } else {
       fetch('/api/sync-sales', {
         method: 'POST',
@@ -2786,6 +3291,16 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearAndResetData,
         exportBackup,
         importBackup,
+        manualPaymentMethods,
+        manualPaymentProofs,
+        updateManualPaymentMethod,
+        submitManualPaymentProof,
+        approveManualPaymentProof,
+        disapproveManualPaymentProof,
+        registerNewCompanyWithTrial,
+        requestJoinCompanyWithCode,
+        activeCompanyTrialInfo,
+        isUnassociatedUser,
       }}
     >
       {children}

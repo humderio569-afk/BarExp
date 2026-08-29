@@ -1,71 +1,57 @@
 {
-  "id": "/",
-  "name": "Lamadone Express",
-  "short_name": "Lamadone",
-  "description": "Système de Gestion de Bar & Caisse Tactile Professionnel Lamadone Express - 100% Offline & Cloud Sync",
+  "name": "BarExp - Caisse & Gestion Hors-Ligne",
+  "short_name": "BarExp",
+  "description": "Système de caisse tactile et de gestion multi-secteurs (Imprimerie, Station-Service, Bar, Commerce) 100% fonctionnel hors-ligne.",
   "start_url": "/",
+  "id": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "any",
-  "background_color": "#0f172a",
+  "background_color": "#090d16",
   "theme_color": "#f59e0b",
   "lang": "fr",
   "dir": "ltr",
-  "categories": ["business", "productivity", "food", "utilities", "finance"],
-  "prefer_related_applications": false,
+  "categories": ["business", "finance", "productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Caisse Tactile",
+      "name": "Point de Vente (Caisse)",
       "short_name": "Caisse",
-      "description": "Ouvrir directement le terminal de vente et caisse tactile",
-      "url": "/",
+      "description": "Ouvrir directement l'écran de caisse tactile",
+      "url": "/?tab=pos",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Gestion du Stock",
+      "name": "Gestion des Stocks",
       "short_name": "Stock",
-      "description": "Consulter les niveaux d'inventaire et réapprovisionnements",
-      "url": "/",
+      "description": "Consulter les réserves et niveaux de stock",
+      "url": "/?tab=stock",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Rapports & Bilan",
-      "short_name": "Bilan",
-      "description": "Consulter les recettes, marges et bilans financiers",
-      "url": "/",
+      "short_name": "Finances",
+      "description": "Consulter le chiffre d'affaires et les rapports",
+      "url": "/?tab=reports",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

@@ -128,26 +128,26 @@ export const GoogleLoginModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden transition-all transform animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full max-h-[92dvh] flex flex-col overflow-hidden my-auto transition-all transform animate-in fade-in zoom-in duration-300">
         
         {/* Header Banner */}
-        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 p-6 sm:p-7 text-white relative text-center">
+        <div className="shrink-0 bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 p-5 sm:p-6 text-white relative text-center">
           <div className="absolute top-3.5 right-3.5 bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full flex items-center gap-1 border border-amber-500/30">
             <ShieldCheck className="w-3 h-3" />
             Accès Sécurisé
           </div>
 
           {/* Logo / Monogram */}
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center mb-3">
-            <span className="text-slate-950 font-black text-2xl tracking-tighter">BE</span>
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center mb-2.5">
+            <span className="text-slate-950 font-black text-xl tracking-tighter">BE</span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">BarExpress</h2>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">BarExp</h2>
           <p className="text-slate-300 text-xs mt-0.5 font-medium">Système de Caisse & Gestion d'Établissement</p>
 
           {/* Mode Switcher Tabs */}
-          <div className="mt-4 inline-flex p-1 bg-slate-950/60 rounded-xl border border-slate-700/60 text-xs font-bold w-full">
+          <div className="mt-3.5 inline-flex p-1 bg-slate-950/60 rounded-xl border border-slate-700/60 text-xs font-bold w-full">
             <button
               type="button"
               onClick={() => {
@@ -179,8 +179,8 @@ export const GoogleLoginModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Modal Body */}
-        <div className="p-6 sm:p-7 space-y-4">
+        {/* Modal Body (Scrollable) */}
+        <div className="p-5 sm:p-6 space-y-4 flex-1 overflow-y-auto overscroll-contain">
           {errorMessage && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
@@ -192,7 +192,7 @@ export const GoogleLoginModal: React.FC = () => {
           {activeMode === 'google' && (
             <div className="space-y-4 py-1">
               <div className="text-center space-y-1">
-                <h3 className="text-base font-black text-slate-900">Bienvenue sur BarExpress</h3>
+                <h3 className="text-base font-black text-slate-900">Bienvenue sur BarExp</h3>
                 <p className="text-xs text-slate-500">
                   Connectez-vous avec votre compte Google pour accéder à votre espace de gestion.
                 </p>
@@ -365,17 +365,9 @@ export const GoogleLoginModal: React.FC = () => {
             </div>
           )}
 
-          <div className="pt-2 flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-modal'))}
-              className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-amber-400 hover:text-amber-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Installer l'application sur cet appareil (PWA)</span>
-            </button>
-            <p className="text-[10px] text-slate-400 text-center">
-              Connexion sécurisée BarExpress &bull; Firebase Auth &bull; 100% Hors-ligne
+          <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-1.5">
+            <p className="text-[11px] text-slate-400 text-center font-medium">
+              Connexion sécurisée BarExp &bull; Firebase Auth & Cloud Firestore
             </p>
           </div>
         </div>

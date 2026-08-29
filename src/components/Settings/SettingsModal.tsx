@@ -399,65 +399,6 @@ export const SettingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* PWA & OFFLINE SYSTEM MANAGEMENT */}
-        <div className="md:col-span-2 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 text-white rounded-3xl p-6 border border-amber-500/30 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start space-x-3.5">
-              <div className="p-3 bg-amber-500 text-slate-950 rounded-2xl shadow-md shrink-0">
-                <Laptop className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-black text-white flex items-center gap-2">
-                  <span>Application PWA & Mode Hors-Ligne</span>
-                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2 py-0.5 rounded-full">
-                    Tous Appareils & Netlify
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Installez Lamadone Express comme application autonome sur vos ordinateurs de caisse, tablettes iPad / Android et téléphones.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => window.dispatchEvent(new CustomEvent('open-pwa-modal'))}
-                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-2 transition cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Guide d'Installation PWA</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Compatibilité Netlify Free</p>
-                <p className="text-[11px] text-slate-400">Routage SPA <code>_redirects</code> actif</p>
-              </div>
-            </div>
-
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Cache Hors-Ligne 100%</p>
-                <p className="text-[11px] text-slate-400">Service Worker & IndexedDB actifs</p>
-              </div>
-            </div>
-
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div>
-                <p className="font-bold text-slate-200">Plein Écran Dédié</p>
-                <p className="text-[11px] text-slate-400">Sans barre de navigation du browser</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Action Button */}
         <div className="md:col-span-2 flex justify-end">
           <button
@@ -473,9 +414,9 @@ export const SettingsModal: React.FC = () => {
 
       {/* SECTOR PRESET CONFIRMATION MODAL */}
       {showSectorConfirmModal && pendingSector && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full border border-slate-200 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center space-x-3 text-amber-600">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full max-h-[92dvh] flex flex-col overflow-hidden border border-slate-200 shadow-2xl my-auto animate-in fade-in zoom-in-95">
+            <div className="flex items-center space-x-3 text-amber-600 shrink-0 mb-3">
               <div className="p-3 bg-amber-100 rounded-2xl">
                 <AlertTriangle className="w-6 h-6 text-amber-700" />
               </div>
@@ -487,49 +428,51 @@ export const SettingsModal: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs text-slate-700 leading-relaxed">
-              Vous allez configurer l'application pour le secteur <strong>{SECTOR_PRESETS[pendingSector].name}</strong>. Comment souhaitez-vous traiter le catalogue de produits existant ?
-            </p>
+            <div className="flex-1 overflow-y-auto space-y-3.5 overscroll-contain pr-1">
+              <p className="text-xs text-slate-700 leading-relaxed">
+                Vous allez configurer l'application pour le secteur <strong>{SECTOR_PRESETS[pendingSector].name}</strong>. Comment souhaitez-vous traiter le catalogue de produits existant ?
+              </p>
 
-            <div className="space-y-2">
-              <label className={`p-3 rounded-xl border-2 flex items-start space-x-3 cursor-pointer transition ${
-                sectorApplyMode === 'replace' ? 'border-amber-500 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="sectorMode"
-                  checked={sectorApplyMode === 'replace'}
-                  onChange={() => setSectorApplyMode('replace')}
-                  className="mt-0.5 text-amber-600 focus:ring-amber-500"
-                />
-                <div>
-                  <span className="font-bold text-xs text-slate-900 block">Remplacer le catalogue (Nouveau départ)</span>
-                  <span className="text-[11px] text-slate-500">
-                    Installe les catégories, unités et articles standards du secteur (recommandé pour une nouvelle entreprise).
-                  </span>
-                </div>
-              </label>
+              <div className="space-y-2">
+                <label className={`p-3 rounded-xl border-2 flex items-start space-x-3 cursor-pointer transition ${
+                  sectorApplyMode === 'replace' ? 'border-amber-500 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="sectorMode"
+                    checked={sectorApplyMode === 'replace'}
+                    onChange={() => setSectorApplyMode('replace')}
+                    className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">Remplacer le catalogue (Nouveau départ)</span>
+                    <span className="text-[11px] text-slate-500">
+                      Installe les catégories, unités et articles standards du secteur (recommandé pour une nouvelle entreprise).
+                    </span>
+                  </div>
+                </label>
 
-              <label className={`p-3 rounded-xl border-2 flex items-start space-x-3 cursor-pointer transition ${
-                sectorApplyMode === 'merge' ? 'border-amber-500 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'
-              }`}>
-                <input
-                  type="radio"
-                  name="sectorMode"
-                  checked={sectorApplyMode === 'merge'}
-                  onChange={() => setSectorApplyMode('merge')}
-                  className="mt-0.5 text-amber-600 focus:ring-amber-500"
-                />
-                <div>
-                  <span className="font-bold text-xs text-slate-900 block">Fusionner (Conserver mes produits existants)</span>
-                  <span className="text-[11px] text-slate-500">
-                    Conserve tous vos articles actuels et ajoute simplement les nouvelles catégories et unités du secteur.
-                  </span>
-                </div>
-              </label>
+                <label className={`p-3 rounded-xl border-2 flex items-start space-x-3 cursor-pointer transition ${
+                  sectorApplyMode === 'merge' ? 'border-amber-500 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'
+                }`}>
+                  <input
+                    type="radio"
+                    name="sectorMode"
+                    checked={sectorApplyMode === 'merge'}
+                    onChange={() => setSectorApplyMode('merge')}
+                    className="mt-0.5 text-amber-600 focus:ring-amber-500"
+                  />
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">Fusionner (Conserver mes produits existants)</span>
+                    <span className="text-[11px] text-slate-500">
+                      Conserve tous vos articles actuels et ajoute simplement les nouvelles catégories et unités du secteur.
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
 
-            <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-200">
+            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-200 shrink-0 mt-3">
               <button
                 type="button"
                 disabled={isApplyingSector}
