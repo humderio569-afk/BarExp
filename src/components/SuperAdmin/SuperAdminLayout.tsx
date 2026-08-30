@@ -67,34 +67,33 @@ export const SuperAdminLayout: React.FC = () => {
             </div>
 
             {/* Right Status & Profile Actions */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               
               {/* Quick Direct Access to Super Admin's Associated Company */}
               {superAdminAssociatedCompany && (
                 <button
                   type="button"
                   onClick={handleOpenAssociatedCompany}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+                  className="p-1.5 text-slate-300 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition shrink-0 cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                   title={`Accéder à l'espace de votre établissement associé (${superAdminAssociatedCompany.name} - ${superAdminAssociatedCompany.code})`}
                 >
-                  <Store className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Accéder à mon entreprise</span>
-                  <span className="sm:hidden">Mon Entreprise</span>
-                  <span className="hidden md:inline-block px-1.5 py-0.2 bg-slate-950 text-amber-400 text-[10px] rounded-md font-mono">
+                  <Store className="w-4 h-4 text-amber-400" />
+                  <span className="hidden sm:inline">Mon Entreprise</span>
+                  <span className="hidden md:inline-block px-1.5 py-0.2 bg-slate-900 border border-slate-700 text-amber-400 text-[10px] rounded font-mono">
                     {superAdminAssociatedCompany.code}
                   </span>
                 </button>
               )}
 
-              {/* Firestore Server Indicator */}
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-[11px] font-bold text-slate-300">
-                <span className={`w-2 h-2 rounded-full ${isServerReachable ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
-                <span>{isServerReachable ? 'Firestore Connecté' : 'Hors-ligne'}</span>
+              {/* Cloud Server Indicator */}
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[11px] font-bold text-slate-300">
+                <span className={`w-2 h-2 rounded-full ${isServerReachable ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                <span>{isServerReachable ? 'Cloud Connecté' : 'Hors-ligne'}</span>
               </div>
 
               {/* Super Admin User Pill */}
-              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs">
-                <div className="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center">
+              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg text-xs">
+                <div className="w-5 h-5 rounded bg-amber-500 text-slate-950 font-black text-[10px] flex items-center justify-center">
                   SA
                 </div>
                 <span className="font-bold text-slate-200 truncate max-w-[140px]">
@@ -106,10 +105,10 @@ export const SuperAdminLayout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => logout()}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/30 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition shrink-0 cursor-pointer flex items-center gap-1.5 text-xs font-bold"
                 title="Se déconnecter"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Déconnexion</span>
               </button>
             </div>

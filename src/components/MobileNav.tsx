@@ -58,7 +58,7 @@ export const MobileNav: React.FC = () => {
   const visibleItems = items.filter(i => i.show);
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 text-slate-700 pb-safe shadow-lg">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 text-slate-700 pb-safe">
       <div className={`grid h-14 items-center px-1 ${
         visibleItems.length === 5
           ? 'grid-cols-5'
@@ -76,25 +76,25 @@ export const MobileNav: React.FC = () => {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all relative ${
+              className={`flex flex-col items-center justify-center py-1 transition cursor-pointer ${
                 isActive
-                  ? 'text-amber-600 font-extrabold scale-105'
+                  ? 'text-amber-600 font-bold'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <div className="relative">
                 {item.icon}
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`absolute -top-1.5 -right-2.5 text-[9px] font-black px-1.5 py-0.2 rounded-full min-w-[16px] text-center ${
+                  <span className={`absolute -top-1.5 -right-2.5 text-[9px] font-bold px-1.5 py-0.2 rounded-full min-w-[16px] text-center ${
                     item.id === 'pos' 
-                      ? 'bg-amber-500 text-slate-950 shadow'
-                      : 'bg-red-500 text-white'
+                      ? 'bg-amber-500 text-slate-950'
+                      : 'bg-slate-900 text-white'
                   }`}>
                     {item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] mt-0.5 truncate max-w-full font-bold">
+              <span className="text-[10px] mt-0.5 truncate max-w-full font-medium">
                 {item.label}
               </span>
             </button>

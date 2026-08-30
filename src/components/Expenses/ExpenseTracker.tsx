@@ -36,6 +36,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Glaçons': '#0284c7',          // sky-600
   'Électricité & Eau': '#8b5cf6', // violet-500
   'Salaires': '#10b981',         // emerald-500
+  'Transport': '#ec4899',        // pink-500
+  'Loyer': '#6366f1',            // indigo-500
+  'Taxes & DGI': '#ef4444',      // red-500
   'Entretien': '#f97316',        // orange-500
   'Autre': '#64748b',            // slate-500
 };
@@ -43,7 +46,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 export const ExpenseTracker: React.FC = () => {
   const { expenses, addExpense, deleteExpense, settings } = useBar();
 
-  // Form State - Category & Payment Method are optional
+  // Form State - Title, Description, Amount, Category & Payment Method
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<Expense['category'] | ''>('');
@@ -78,6 +82,9 @@ export const ExpenseTracker: React.FC = () => {
     'Glaçons',
     'Électricité & Eau',
     'Salaires',
+    'Transport',
+    'Loyer',
+    'Taxes & DGI',
     'Entretien',
     'Autre',
   ];
@@ -186,6 +193,7 @@ export const ExpenseTracker: React.FC = () => {
     }
 
     addExpense({
+      title: title.trim() || undefined,
       category: category || 'Autre', // Fallback to 'Autre' if optional category omitted
       description: description.trim(),
       amount: numAmount,
@@ -195,6 +203,7 @@ export const ExpenseTracker: React.FC = () => {
       recordedBy: settings.cashierName,
     });
 
+    setTitle('');
     setDescription('');
     setAmount('');
     setSupplier('');
@@ -327,15 +336,29 @@ export const ExpenseTracker: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             
+            {/* Titre / Nom de la Dépense */}
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">
+                Nom / Intitulé de la dépense <span className="text-slate-400 font-normal">(Optionnel)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="ex: Glace pour comptoir, Transport marchandise, Facture loyer..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 text-slate-900 p-2.5 rounded-xl focus:outline-none focus:border-amber-500 font-medium"
+              />
+            </div>
+
             {/* Description (Required) */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
-                Description <span className="text-red-500">*</span>
+                Description / Détails <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="ex: Achat 4 sacs de glaçons, Facture électricité..."
+                placeholder="ex: Achat 4 sacs de glaçons, Facture électricité du mois..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 text-slate-900 p-2.5 rounded-xl focus:outline-none focus:border-amber-500 font-medium"
@@ -751,7 +774,12 @@ export const ExpenseTracker: React.FC = () => {
                           </span>
                           <span className="text-[10px] text-slate-500 font-medium">{expense.date}</span>
                         </div>
-                        <h4 className="font-bold text-slate-900 text-sm leading-tight">{expense.description}</h4>
+                        {expense.title && (
+                          <h4 className="font-extrabold text-slate-900 text-sm leading-tight">{expense.title}</h4>
+                        )}
+                        <p className={`text-xs ${expense.title ? 'text-slate-600' : 'font-bold text-slate-900'}`}>
+                          {expense.description}
+                        </p>
                         <p className="text-[11px] text-slate-500">
                           Par: {expense.recordedBy} • Mode: {expense.paymentMethod || 'Non spécifié'} 
                           {expense.supplier ? ` • Fournisseur: ${expense.supplier}` : ''}

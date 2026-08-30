@@ -378,14 +378,24 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                           {isPositive ? 'Réception / Entrée' : isSpill ? 'Perte / Casse' : isSale ? 'Vente Caisse' : 'Sortie / Ajustement'}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
-                        {log.reason || 'Mouvement standard'} • {new Date(log.timestamp).toLocaleString('fr-FR', {
+                      <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium text-slate-700">{log.reason || 'Mouvement standard'}</span>
+                        <span>•</span>
+                        <span>{new Date(log.timestamp).toLocaleString('fr-FR', {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
-                        })}
+                        })}</span>
+                        {log.recordedBy && (
+                          <>
+                            <span>•</span>
+                            <span className="text-slate-700 font-bold bg-slate-100 px-1.5 py-0.2 rounded">
+                              Par: {log.recordedBy}
+                            </span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -396,9 +406,9 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
                     }`}>
                       {isPositive ? `+${log.quantity}` : `-${log.quantity}`}
                     </span>
-                    <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
-                      Stock: <span className="font-bold text-slate-600">{log.previousStock}</span> → <span className="font-bold text-slate-800">{log.newStock}</span>
-                    </p>
+                    <div className="text-[10px] font-semibold text-slate-500 mt-0.5 bg-slate-100 px-2 py-0.5 rounded-md">
+                      Avant: <span className="font-bold text-slate-700">{log.previousStock}</span> → Après: <span className="font-black text-slate-900">{log.newStock}</span>
+                    </div>
                   </div>
                 </div>
               );

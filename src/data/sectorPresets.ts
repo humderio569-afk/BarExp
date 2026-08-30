@@ -17,8 +17,8 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
   // 1. IMPRIMERIE, BUREAUTIQUE, SÉRIGRAPHIE & MULTI-SERVICES (HAÏTI & CARAÏBES)
   print_cyber: {
     id: 'print_cyber',
-    name: "Imprimerie, Bureautique & Multi-Services",
-    shortLabel: "Imprimerie & Sérigraphie",
+    name: "Imprimerie & Bureautique",
+    shortLabel: "Imprimerie",
     tagline: "Impressions A4/A3, Sérigraphie sur objets, Rédaction documents & Graphisme",
     description: "Conçu pour les imprimeries, centres de reprographie, cyber-cafés et ateliers de personnalisation d'objets (T-shirts, mugs, affiches, saisie).",
     icon: 'Printer',
@@ -187,8 +187,8 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
   // 2. STATION-SERVICE, POMPES À CARBURANT & GAZ PROPANE
   gas_station: {
     id: 'gas_station',
-    name: "Station-Service, Carburants & Gaz Propane",
-    shortLabel: "Pompes & Gaz Propane",
+    name: "Station-Service & Gaz",
+    shortLabel: "Station-Service",
     tagline: "Vente de Carburants au Gallon, Recharges de Gaz Propane & Lubrifiants",
     description: "Adapté pour les stations-service, distributeurs de gaz propane en bonbonnes ou vrac, et boutiques d'autoroute.",
     icon: 'Fuel',
@@ -314,8 +314,8 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
   // 3. LIBRAIRIE & PAPETERIE SCOLAIRE / PROFESSIONNELLE
   stationery_bookstore: {
     id: 'stationery_bookstore',
-    name: "Librairie, Papeterie & Fournitures",
-    shortLabel: "Librairie & Papeterie",
+    name: "Librairie & Papeterie",
+    shortLabel: "Papeterie",
     tagline: "Livres scolaires, Romans, Cahiers, Stylos & Matériel pédagogique",
     description: "Idéal pour les librairies, papeteries scolaires, magasins de fournitures de bureau et fournitures d'art.",
     icon: 'BookOpen',
@@ -440,8 +440,8 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
   // 4. BAR, RESTAURANT, LOUNGE & GASTRONOMIE
   bar_restaurant: {
     id: 'bar_restaurant',
-    name: "Bar, Lounge, Restaurant & Boissons",
-    shortLabel: "Bar & Restaurant",
+    name: "Bar & Restaurant",
+    shortLabel: "Bar / Resto",
     tagline: "Gestion de comptoir, tables, boissons, plats, grillades & chichas",
     description: "Configuration standard avec gestion des tables, cocktails, alcools, plats cuisinés et snacks.",
     icon: 'Beer',
@@ -519,8 +519,8 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
   // 5. COMMERCE GÉNÉRAL, SUPÉRETTE & DIVERS
   general_retail: {
     id: 'general_retail',
-    name: "Commerce Général, Supérette & Épicerie",
-    shortLabel: "Commerce Général",
+    name: "Commerce Général",
+    shortLabel: "Commerce",
     tagline: "Vente au détail, produits alimentaires, hygiène & quincaillerie",
     description: "Adapté pour les supérettes, boutiques d'alimentation générale et quincailleries de proximité.",
     icon: 'Store',

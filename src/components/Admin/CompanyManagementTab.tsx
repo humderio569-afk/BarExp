@@ -10,21 +10,16 @@ import {
   Copy,
   Check,
   ExternalLink,
-  ShieldAlert,
   TrendingUp,
   Receipt,
   Users,
   Phone,
   Mail,
-  Sliders,
-  DollarSign,
   AlertTriangle,
-  RotateCcw,
-  Sparkles,
-  ArrowRight,
   Trash2,
   Edit2,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from 'lucide-react';
 
 export const CompanyManagementTab: React.FC = () => {
@@ -37,7 +32,6 @@ export const CompanyManagementTab: React.FC = () => {
     deleteCompany,
     switchCompanySpace,
     canAccessCompanySpace,
-    impersonatedCompanyId,
     isImpersonating,
     activeCompany,
     settings,
@@ -77,7 +71,6 @@ export const CompanyManagementTab: React.FC = () => {
     setFormAdminEmail('');
     setFormPhone('');
     setFormCurrency('G');
-    // Generate suggested 8-char code
     const randomDigits = Math.floor(10000 + Math.random() * 90000);
     setFormCode(`BAR${randomDigits}`);
     setFormAddress('');
@@ -129,7 +122,6 @@ export const CompanyManagementTab: React.FC = () => {
       return;
     }
 
-    // Check code collision if creating new or changing code
     const existingCodeMatch = companies.find(c => c.code.toUpperCase() === cleanCode && (!editingCompany || c.id !== editingCompany.id));
     if (existingCodeMatch) {
       setFormError(`Le code "${cleanCode}" est déjà utilisé par l'établissement "${existingCodeMatch.name}".`);
@@ -192,163 +184,146 @@ export const CompanyManagementTab: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Impersonation Alert Banner */}
       {isImpersonating && (
-        <div className="p-4 bg-amber-500 text-slate-950 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6 shrink-0" />
+        <div className="p-3.5 bg-amber-500 text-slate-950 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Building2 className="w-5 h-5 shrink-0" />
             <div>
-              <p className="text-xs font-black uppercase tracking-wider">Mode Supervision Établissement Actif</p>
-              <p className="text-sm font-bold">
-                Vous êtes actuellement dans l'espace de : <span className="underline">{activeCompany?.name}</span> ({activeCompany?.code})
+              <p className="text-xs font-bold uppercase tracking-wider">Supervision d'établissement</p>
+              <p className="text-xs font-semibold">
+                Espace actif : {activeCompany?.name} ({activeCompany?.code})
               </p>
             </div>
           </div>
           <button
             onClick={() => switchCompanySpace(null)}
-            className="bg-slate-950 hover:bg-slate-900 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow cursor-pointer shrink-0"
+            className="bg-slate-950 hover:bg-slate-900 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition cursor-pointer shrink-0"
           >
-            Quitter et revenir au mode Global
+            Quitter la supervision
           </button>
         </div>
       )}
 
       {/* Platform Overview Metrics */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-600" />
-              Tableau de Bord Global Plateforme
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-slate-600" />
+              Vue d'Ensemble des Établissements
             </h3>
-            <p className="text-xs text-slate-500">
-              Indicateurs consolidés en temps réel de tous les établissements clients
-            </p>
           </div>
 
           <button
             onClick={handleOpenCreateModal}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
+            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Créer une Entreprise (Admin)</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Ajouter un Établissement</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Total Companies */}
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-            <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
-              <span>Établissements Clients</span>
-              <Building2 className="w-4 h-4 text-amber-500" />
+          <div className="p-3.5 bg-white border border-slate-200 rounded-xl">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+              <span>Établissements</span>
+              <Building2 className="w-3.5 h-3.5 text-slate-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">{platformStats.totalCompanies}</span>
-              <span className="text-xs font-bold text-emerald-600">
-                {platformStats.activeCompanies} actifs
+              <span className="text-xl font-bold text-slate-900">{platformStats.totalCompanies}</span>
+              <span className="text-xs text-slate-500">
+                ({platformStats.activeCompanies} actifs)
               </span>
             </div>
-            {platformStats.suspendedCompanies > 0 && (
-              <p className="text-[10px] text-red-500 font-medium mt-0.5">
-                {platformStats.suspendedCompanies} établissement(s) suspendu(s)
-              </p>
-            )}
           </div>
 
           {/* Total Revenue */}
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-            <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
-              <span>Chiffre d'Affaires Global</span>
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
+          <div className="p-3.5 bg-white border border-slate-200 rounded-xl">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+              <span>CA Réseau Global</span>
+              <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-slate-900">
+              <span className="text-xl font-bold text-slate-900">
                 {platformStats.totalPlatformRevenue.toLocaleString('fr-FR')}
               </span>
-              <span className="text-xs font-bold text-slate-500">{settings.currency || 'G'}</span>
+              <span className="text-xs text-slate-500">{settings.currency || 'G'}</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Cumul des ventes de l'ensemble du réseau
-            </p>
           </div>
 
           {/* Total Transactions */}
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-            <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
-              <span>Volume des Transactions</span>
-              <Receipt className="w-4 h-4 text-blue-500" />
+          <div className="p-3.5 bg-white border border-slate-200 rounded-xl">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+              <span>Transactions</span>
+              <Receipt className="w-3.5 h-3.5 text-slate-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">
+              <span className="text-xl font-bold text-slate-900">
                 {platformStats.totalPlatformTransactions.toLocaleString('fr-FR')}
               </span>
-              <span className="text-xs font-bold text-slate-500">tickets émis</span>
+              <span className="text-xs text-slate-500">tickets</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Trafic de caisse enregistré
-            </p>
           </div>
 
           {/* Total Staff */}
-          <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
-            <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
-              <span>Personnel & Caissiers</span>
-              <Users className="w-4 h-4 text-indigo-500" />
+          <div className="p-3.5 bg-white border border-slate-200 rounded-xl">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold mb-1">
+              <span>Personnel Réseau</span>
+              <Users className="w-3.5 h-3.5 text-slate-400" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">{platformStats.totalStaffCount}</span>
-              <span className="text-xs font-bold text-slate-500">utilisateurs</span>
+              <span className="text-xl font-bold text-slate-900">{platformStats.totalStaffCount}</span>
+              <span className="text-xs text-slate-500">utilisateurs</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Comptes actifs & pré-inscrits
-            </p>
           </div>
         </div>
       </div>
 
       {/* Companies List Section */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         {/* Search & Filter Bar */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="p-3 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="relative w-full sm:w-72">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Rechercher par nom, code, email..."
+              placeholder="Rechercher par nom, code, gérant..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+          <div className="flex items-center gap-1 w-full sm:w-auto">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
                 statusFilter === 'all'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
               Tous ({companies.length})
             </button>
             <button
               onClick={() => setStatusFilter('active')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
                 statusFilter === 'active'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
               Actifs ({companies.filter(c => c.status === 'active').length})
             </button>
             <button
               onClick={() => setStatusFilter('suspended')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
                 statusFilter === 'suspended'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
               Suspendus ({companies.filter(c => c.status === 'suspended').length})
@@ -359,10 +334,8 @@ export const CompanyManagementTab: React.FC = () => {
         {/* Company Cards Grid */}
         <div className="divide-y divide-slate-100">
           {filteredCompanies.length === 0 ? (
-            <div className="p-12 text-center text-slate-400">
-              <Building2 className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm font-bold text-slate-600">Aucun établissement trouvé</p>
-              <p className="text-xs mt-1">Essayez un autre mot-clé ou créez un nouvel établissement.</p>
+            <div className="p-8 text-center text-slate-400 text-xs">
+              Aucun établissement ne correspond aux critères de recherche.
             </div>
           ) : (
             filteredCompanies.map(company => {
@@ -372,30 +345,30 @@ export const CompanyManagementTab: React.FC = () => {
               return (
                 <div
                   key={company.id}
-                  className={`p-5 transition flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+                  className={`p-3.5 transition flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${
                     isCurrentActive
-                      ? 'bg-amber-50/40 border-l-4 border-amber-500'
+                      ? 'bg-slate-50 border-l-2 border-amber-500'
                       : isSuspended
-                      ? 'bg-slate-50/60 opacity-80'
-                      : 'hover:bg-slate-50/70'
+                      ? 'bg-slate-50/50 opacity-70'
+                      : 'hover:bg-slate-50/60'
                   }`}
                 >
                   {/* Left info */}
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h4 className="text-base font-black text-slate-900 tracking-tight">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-sm font-bold text-slate-900">
                         {company.name}
                       </h4>
 
                       {/* 8-Char Code Badge with Copy button */}
                       <button
                         onClick={() => handleCopyCode(company.code)}
-                        title="Cliquer pour copier le code de l'entreprise"
-                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-amber-400 rounded-lg text-xs font-mono font-black shadow-xs transition active:scale-95 cursor-pointer"
+                        title="Copier le code de l'établissement"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-xs font-mono font-semibold border border-slate-200 transition cursor-pointer"
                       >
                         <span>{company.code}</span>
                         {copiedCode === company.code ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3 h-3 text-slate-700" />
                         ) : (
                           <Copy className="w-3 h-3 text-slate-400" />
                         )}
@@ -403,18 +376,18 @@ export const CompanyManagementTab: React.FC = () => {
 
                       {/* Status Tag */}
                       {isSuspended ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-100 text-red-700 border border-red-200">
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-200">
                           Suspendu
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
                           Actif
                         </span>
                       )}
 
                       {isCurrentActive && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-slate-950 border border-amber-300">
-                          Espace Sélectionné
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                          Espace Actif
                         </span>
                       )}
                     </div>
@@ -427,7 +400,7 @@ export const CompanyManagementTab: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5 truncate">
                         <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">Admin Google : <strong className="text-slate-800">{company.adminEmail}</strong></span>
+                        <span className="truncate">Admin : <strong className="text-slate-800">{company.adminEmail}</strong></span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -436,49 +409,47 @@ export const CompanyManagementTab: React.FC = () => {
                     </div>
 
                     {/* Company Stats Bar */}
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-semibold pt-1 text-slate-500">
-                      <span>Devise : <strong className="text-slate-900">{company.currency}</strong></span>
-                      <span>•</span>
-                      <span>CA : <strong className="text-emerald-700">{(company.stats?.totalSalesAmount || 0).toLocaleString('fr-FR')} {company.currency}</strong></span>
-                      <span>•</span>
-                      <span>Transactions : <strong className="text-slate-900">{(company.stats?.totalTransactions || 0).toLocaleString('fr-FR')}</strong></span>
-                      <span>•</span>
-                      <span>Créé le : <strong className="text-slate-700">{new Date(company.createdAt).toLocaleDateString('fr-FR')}</strong></span>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-0.5">
+                      <span>Devise : <strong className="text-slate-800">{company.currency}</strong></span>
+                      <span>&bull;</span>
+                      <span>CA : <strong className="text-slate-800">{(company.stats?.totalSalesAmount || 0).toLocaleString('fr-FR')} {company.currency}</strong></span>
+                      <span>&bull;</span>
+                      <span>Transactions : <strong className="text-slate-800">{(company.stats?.totalTransactions || 0).toLocaleString('fr-FR')}</strong></span>
                     </div>
                   </div>
 
                   {/* Right actions */}
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    {/* Impersonate / Switch Space Button (Only for associated company) */}
+                  <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                    {/* Switch Space Button */}
                     {canAccessCompanySpace(company) ? (
                       <button
                         onClick={() => switchCompanySpace(isCurrentActive ? null : company.id)}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black transition shadow-xs cursor-pointer ${
+                        className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${
                           isCurrentActive
-                            ? 'bg-slate-900 text-amber-400 hover:bg-slate-800'
-                            : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                            ? 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200'
+                            : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-500 font-bold'
                         }`}
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>{isCurrentActive ? "Espace En Cours" : "Accéder à mon Bar"}</span>
+                        <ExternalLink className="w-3 h-3" />
+                        <span>{isCurrentActive ? "En cours" : "Accéder"}</span>
                       </button>
                     ) : (
                       <div
-                        className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold border border-slate-200 select-none cursor-default"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-slate-50 text-slate-400 rounded-lg text-xs border border-slate-200 select-none cursor-default"
                         title="Espace confidentiel réservé au gérant de cet établissement"
                       >
-                        <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Espace Client Dédié</span>
+                        <ShieldCheck className="w-3 h-3 text-slate-400" />
+                        <span>Espace Dédié</span>
                       </div>
                     )}
 
                     {/* Suspend / Reactivate */}
                     <button
                       onClick={() => toggleCompanyStatus(company.id)}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition cursor-pointer ${
                         isSuspended
-                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-                          : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                          ? 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {isSuspended ? 'Réactiver' : 'Suspendre'}
@@ -487,10 +458,10 @@ export const CompanyManagementTab: React.FC = () => {
                     {/* Edit */}
                     <button
                       onClick={() => handleOpenEditModal(company)}
-                      className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer border border-transparent hover:border-slate-200"
                       title="Modifier les informations"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3.5 h-3.5" />
                     </button>
 
                     {/* Delete */}
@@ -500,10 +471,10 @@ export const CompanyManagementTab: React.FC = () => {
                           deleteCompany(company.id);
                         }
                       }}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
                       title="Supprimer cet établissement"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -515,62 +486,55 @@ export const CompanyManagementTab: React.FC = () => {
 
       {/* Modal: Create or Edit Company */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border border-slate-200 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-150">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-slate-900 to-amber-950 p-6 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
-                  <Building2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-white">
-                    {editingCompany ? "Modifier l'Établissement" : "Créer une Entreprise (Admin)"}
-                  </h3>
-                  <p className="text-xs text-slate-300">
-                    Définition des accès maîtres et du code unique à 8 caractères
-                  </p>
-                </div>
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-slate-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  {editingCompany ? "Modifier l'Établissement" : "Créer un Établissement"}
+                </h3>
               </div>
 
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-slate-400 hover:text-white text-lg font-bold p-1 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSubmitForm} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+            <form onSubmit={handleSubmitForm} className="p-4 space-y-3 max-h-[80vh] overflow-y-auto">
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2">
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
                   <span>{formError}</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Company Name */}
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-bold text-slate-800">
-                    Nom du Bar / Établissement *
+                  <label className="text-xs font-semibold text-slate-700">
+                    Nom de l'Établissement *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ex: Havana Club Port-au-Prince"
+                    placeholder="Ex: Bar Le Spot"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
 
                 {/* 8-Character Unique Code */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-800">
-                      Code Unique (8 Caractères) *
+                    <label className="text-xs font-semibold text-slate-700">
+                      Code (8 Caractères) *
                     </label>
                     <button
                       type="button"
@@ -579,7 +543,7 @@ export const CompanyManagementTab: React.FC = () => {
                         const randomDigits = Math.floor(10000 + Math.random() * 90000);
                         setFormCode(`${prefix.padEnd(3, 'X')}${randomDigits}`.slice(0, 8));
                       }}
-                      className="text-[10px] text-amber-600 hover:text-amber-700 font-bold underline cursor-pointer"
+                      className="text-[10px] text-amber-600 hover:text-amber-700 font-semibold underline cursor-pointer"
                     >
                       Générer
                     </button>
@@ -591,66 +555,63 @@ export const CompanyManagementTab: React.FC = () => {
                     placeholder="BAR78901"
                     value={formCode}
                     onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 text-amber-400 font-mono tracking-widest font-black rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-900 font-mono font-bold rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 uppercase"
                   />
-                  <p className="text-[10px] text-slate-400">Code saisi par le personnel pour se connecter à ce bar.</p>
                 </div>
 
                 {/* Manager Name */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-800">
-                    Nom du Gérant / Responsable *
+                  <label className="text-xs font-semibold text-slate-700">
+                    Nom du Gérant *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Ex: Jean-Baptiste Duval"
+                    placeholder="Ex: Jean Duval"
                     value={formManager}
                     onChange={(e) => setFormManager(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
 
                 {/* Admin Google Email */}
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
-                    <span>Email Google de l'Administrateur *</span>
-                    <span className="text-[10px] font-normal text-amber-700">Droit d'administration direct</span>
+                  <label className="text-xs font-semibold text-slate-700">
+                    Email Google de l'Administrateur *
                   </label>
                   <input
                     type="email"
                     required
-                    placeholder="admin.bar@gmail.com"
+                    placeholder="admin@gmail.com"
                     value={formAdminEmail}
                     onChange={(e) => setFormAdminEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
-                  <p className="text-[10px] text-slate-400">Cette adresse aura les pleins pouvoirs de gestion sur cet établissement.</p>
                 </div>
 
                 {/* Phone */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-800">
-                    Numéro de Téléphone
+                  <label className="text-xs font-semibold text-slate-700">
+                    Téléphone
                   </label>
                   <input
                     type="text"
                     placeholder="+509 3700-0000"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
 
                 {/* Currency */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-800">
-                    Devise Principale
+                  <label className="text-xs font-semibold text-slate-700">
+                    Devise
                   </label>
                   <select
                     value={formCurrency}
                     onChange={(e) => setFormCurrency(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
                     <option value="G">Gourdes (G / HTG)</option>
                     <option value="$">Dollars US ($)</option>
@@ -661,32 +622,32 @@ export const CompanyManagementTab: React.FC = () => {
 
                 {/* Address */}
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-bold text-slate-800">
-                    Adresse / Ville
+                  <label className="text-xs font-semibold text-slate-700">
+                    Adresse
                   </label>
                   <input
                     type="text"
-                    placeholder="Ex: 42 Rue Panaméricaine, Pétion-Ville"
+                    placeholder="Ex: 42 Rue Panaméricaine"
                     value={formAddress}
                     onChange={(e) => setFormAddress(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-md transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting
                     ? "Enregistrement..."

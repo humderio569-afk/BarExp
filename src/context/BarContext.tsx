@@ -77,7 +77,7 @@ interface BarContextType {
   suspendUser: (uid: string) => Promise<void>;
   reactivateUser: (uid: string) => Promise<void>;
   addUserByEmail: (email: string, role?: UserRole, permissions?: Partial<UserPermissions>) => Promise<void>;
-  updateUserPermissions: (uid: string, permissions: UserPermissions, role: UserRole, displayName?: string) => Promise<void>;
+  updateUserPermissions: (uid: string, permissions: UserPermissions, role: UserRole, displayName?: string, customRoleTitle?: string) => Promise<void>;
   updateUserProfileName: (uid: string, newDisplayName: string) => Promise<void>;
   deleteUserAccount: (uid: string) => Promise<void>;
   isSuperAdmin: boolean;
@@ -95,6 +95,7 @@ interface BarContextType {
   // Cart operations
   addToCart: (product: Product, quantity?: number, selectedFlavor?: string) => void;
   updateCartItemQuantity: (productId: string, quantity: number, flavor?: string) => void;
+  updateCartItemUnitPrice: (productId: string, unitPrice: number, flavor?: string, priceType?: 'negotiated' | 'auction' | 'custom' | 'standard') => void;
   updateCartItemFlavor: (productId: string, newFlavor: string, currentFlavor?: string) => void;
   applyCartItemDiscount: (productId: string, discountAmount: number, flavor?: string) => void;
   removeFromCart: (productId: string, flavor?: string) => void;
@@ -1019,12 +1020,47 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateCompany = async (id: string, updates: Partial<Company>) => {
     setCompanies(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+
+    // If updating current active company or user's company, sync state
+    if (activeCompany?.id === id || currentUser?.companyId === id) {
+      if (updates.name) {
+        setSettings(prev => ({ ...prev, barName: updates.name! }));
+        if (currentUser && currentUser.companyId === id) {
+          const updatedUser: AppUser = { ...currentUser, companyName: updates.name };
+          setCurrentUser(updatedUser);
+          safeSetItem(STORAGE_KEYS.CACHED_USER, JSON.stringify(updatedUser));
+          recordApprovedUser(updatedUser);
+        }
+      }
+      if (updates.cashierName) {
+        setSettings(prev => ({ ...prev, cashierName: updates.cashierName! }));
+      }
+      if (updates.customRoleLabels) {
+        setSettings(prev => ({ ...prev, customRoleLabels: updates.customRoleLabels }));
+      }
+      if (updates.currency) {
+        setSettings(prev => ({ ...prev, currency: updates.currency! }));
+      }
+      if (updates.tagline !== undefined) {
+        setSettings(prev => ({ ...prev, tagline: updates.tagline || '' }));
+      }
+      if (updates.phone !== undefined) {
+        setSettings(prev => ({ ...prev, phone: updates.phone || '' }));
+      }
+      if (updates.address !== undefined) {
+        setSettings(prev => ({ ...prev, address: updates.address || '' }));
+      }
+      if (updates.taxRate !== undefined) {
+        setSettings(prev => ({ ...prev, taxRate: updates.taxRate }));
+      }
+    }
+
     try {
       await setDoc(doc(db, 'companies', id), cleanForFirestore(updates), { merge: true });
     } catch (err) {
       console.warn('Could not update company in Firestore:', err);
     }
-    await addAuditLog('company_updated', `Mise à jour des paramètres de l'entreprise ID ${id}`);
+    await addAuditLog('company_updated', `Mise à jour des paramètres de l'entreprise "${updates.name || id}"`);
   };
 
   const toggleCompanyStatus = async (id: string) => {
@@ -1942,7 +1978,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const updateUserPermissions = async (uid: string, permissions: UserPermissions, role: UserRole, displayName?: string) => {
+  const updateUserPermissions = async (uid: string, permissions: UserPermissions, role: UserRole, displayName?: string, customRoleTitle?: string) => {
     const targetUser = allUsers.find(u => u.uid === uid);
     if (!targetUser) return;
 
@@ -1952,6 +1988,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       role,
       permissions,
       ...(cleanName ? { displayName: cleanName } : {}),
+      customRoleTitle: customRoleTitle !== undefined ? customRoleTitle.trim() : targetUser.customRoleTitle,
     };
 
     setAllUsers(prev => prev.map(u => u.uid === uid ? updated : u));
@@ -1963,11 +2000,12 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     if (currentUser && currentUser.uid === uid) {
       setCurrentUser(updated);
+      safeSetItem(STORAGE_KEYS.CACHED_USER, JSON.stringify(updated));
     }
 
     await addAuditLog(
       'permissions_updated', 
-      `Mise à jour du profil et des permissions de ${updated.displayName} (${updated.email}). Rôle: ${role}.`
+      `Mise à jour du profil et des permissions de ${updated.displayName} (${updated.email}). Rôle: ${role}${customRoleTitle ? ` (${customRoleTitle})` : ''}.`
     );
   };
 
@@ -2464,8 +2502,11 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOfflineQueue([]);
   };
 
-  // Cart helper calculations
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  // Cart helper calculations (incorporates custom unit price for negotiated, auction, or promotional sales)
+  const cartSubtotal = cart.reduce((sum, item) => {
+    const unitPrice = item.customUnitPrice !== undefined ? item.customUnitPrice : item.product.price;
+    return sum + (unitPrice * item.quantity);
+  }, 0);
   const cartDiscountTotal = cart.reduce((sum, item) => sum + (item.discount * item.quantity), 0);
   const cartTotal = Math.max(0, cartSubtotal - cartDiscountTotal);
 
@@ -2504,6 +2545,35 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ? { ...item, quantity } 
           : item
       )
+    );
+  };
+
+  // Support for negotiated prices, open/incentivized pricing, or auctions
+  const updateCartItemUnitPrice = (
+    productId: string,
+    unitPrice: number,
+    flavor?: string,
+    priceType: 'negotiated' | 'auction' | 'custom' | 'standard' = 'custom'
+  ) => {
+    setCart(prev =>
+      prev.map(item => {
+        if (item.product.id === productId && item.selectedFlavor === flavor) {
+          if (priceType === 'standard' || unitPrice === item.product.price) {
+            return {
+              ...item,
+              customUnitPrice: undefined,
+              priceType: undefined,
+            };
+          }
+          const validPrice = Math.max(0, isNaN(unitPrice) ? 0 : unitPrice);
+          return {
+            ...item,
+            customUnitPrice: validPrice,
+            priceType: priceType,
+          };
+        }
+        return item;
+      })
     );
   };
 
@@ -2833,6 +2903,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     updateProduct(productId, { stock: newStock });
 
+    const recorder = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Gérant';
     const newLog: StockLog = {
       id: `log-${Date.now()}`,
       productId,
@@ -2841,8 +2912,9 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       quantity: Math.abs(quantityToAdd),
       previousStock,
       newStock,
-      reason: reason || 'Réapprovisionnement',
+      reason: reason || (quantityToAdd >= 0 ? 'Réapprovisionnement' : 'Ajustement'),
       timestamp: new Date().toISOString(),
+      recordedBy: recorder,
     };
 
     setStockLogs(prev => [newLog, ...prev]);
@@ -2852,7 +2924,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     addAuditLog(
       'stock_adjusted',
-      `Ajustement de stock pour ${product.name} (${quantityToAdd >= 0 ? '+' : ''}${quantityToAdd}). Raison : ${reason || 'Réapprovisionnement'}.`
+      `Remplissage de stock pour ${product.name} : État avant = ${previousStock}, Ajout = ${quantityToAdd >= 0 ? '+' : ''}${quantityToAdd}, Nouveau solde = ${newStock}. Motif : ${reason || 'Réapprovisionnement'}.`
     );
   };
 
@@ -2994,6 +3066,31 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       return updated;
     });
+
+    if (activeCompany) {
+      const compUpdates: Partial<Company> = {};
+      if (newSettings.barName) compUpdates.name = newSettings.barName;
+      if (newSettings.cashierName) compUpdates.cashierName = newSettings.cashierName;
+      if (newSettings.customRoleLabels) compUpdates.customRoleLabels = newSettings.customRoleLabels;
+      if (newSettings.tagline !== undefined) compUpdates.tagline = newSettings.tagline;
+      if (newSettings.phone !== undefined) compUpdates.phone = newSettings.phone;
+      if (newSettings.address !== undefined) compUpdates.address = newSettings.address;
+      if (newSettings.taxRate !== undefined) compUpdates.taxRate = newSettings.taxRate;
+      if (newSettings.currency) compUpdates.currency = newSettings.currency;
+      if (newSettings.businessSector) compUpdates.businessSector = newSettings.businessSector;
+      if (newSettings.businessSectorName) compUpdates.businessSectorName = newSettings.businessSectorName;
+
+      if (Object.keys(compUpdates).length > 0) {
+        setCompanies(prev => prev.map(c => c.id === activeCompany.id ? { ...c, ...compUpdates } : c));
+        setDoc(doc(db, 'companies', activeCompany.id), cleanForFirestore(compUpdates), { merge: true }).catch(() => {});
+        
+        if (compUpdates.name && currentUser && currentUser.companyId === activeCompany.id) {
+          const updatedUser: AppUser = { ...currentUser, companyName: compUpdates.name };
+          setCurrentUser(updatedUser);
+          safeSetItem(STORAGE_KEYS.CACHED_USER, JSON.stringify(updatedUser));
+        }
+      }
+    }
 
     addAuditLog(
       'settings_updated',
@@ -3265,6 +3362,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearOfflineQueue,
         addToCart,
         updateCartItemQuantity,
+        updateCartItemUnitPrice,
         updateCartItemFlavor,
         applyCartItemDiscount,
         removeFromCart,

@@ -367,7 +367,7 @@ export const GoogleLoginModal: React.FC = () => {
 
           <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-1.5">
             <p className="text-[11px] text-slate-400 text-center font-medium">
-              Connexion sécurisée BarExp &bull; Firebase Auth & Cloud Firestore
+              Connexion sécurisée de bout en bout &bull; Architecture Enterprise Chiffrée
             </p>
           </div>
         </div>

@@ -279,7 +279,7 @@ export const DatabaseHealthTab: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Statistiques exactes en direct du plan Firebase Spark & API Gemini pour anticiper vos coûts.
+            Statistiques exactes en direct du moteur de stockage cloud & API IA pour anticiper vos capacités.
           </p>
         </div>
 
@@ -326,19 +326,19 @@ export const DatabaseHealthTab: React.FC = () => {
           </div>
           <div className="space-y-1.5 flex-1">
             <h3 className="text-sm sm:text-base font-extrabold flex items-center gap-2">
-              <span>Diagnostic Financier : </span>
+              <span>Diagnostic de Capacité : </span>
               <span className={`font-black ${
                 mustUpgradeNow ? 'text-red-700' : isCloseToFreeLimit ? 'text-amber-700' : 'text-emerald-700'
               }`}>
                 {mustUpgradeNow 
-                  ? 'Passage au Plan Blaze Conseillé (Quotas > 90%)'
+                  ? 'Extension de Capacité Conseillée (Quotas > 90%)'
                   : isCloseToFreeLimit
-                  ? 'Plan Gratuit sous surveillance (Croissance active)'
-                  : 'Aucun paiement nécessaire : Vous êtes 100% dans le Plan Gratuit'}
+                  ? 'Quota Standard sous surveillance (Croissance active)'
+                  : 'Capacité Optimale : Vous êtes 100% dans les limites standard incluses'}
               </span>
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Firebase offre gratuitement chaque jour <strong>50 000 lectures</strong>, <strong>20 000 écritures</strong> et <strong>1 Go de stockage</strong>.
+              Le service de synchronisation cloud alloue chaque jour jusqu'à <strong>50 000 lectures</strong>, <strong>20 000 écritures</strong> et <strong>1 Go de stockage chiffré</strong>.
               Grâce à notre architecture hors-ligne (cache local et synchronisation par delta), votre établissement consomme moins de <strong>5%</strong> des quotas journaliers en utilisation normale.
             </p>
             <div className="pt-2 flex flex-wrap gap-2 text-[11px] font-bold">
@@ -362,7 +362,7 @@ export const DatabaseHealthTab: React.FC = () => {
         {/* Gauge 1: Reads */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Lectures Firestore</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Lectures Cloud</span>
             <span className="text-xs font-black text-slate-700">{firestore.readsPercentage}%</span>
           </div>
           <div className="space-y-1">
@@ -386,7 +386,7 @@ export const DatabaseHealthTab: React.FC = () => {
         {/* Gauge 2: Writes */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Écritures Firestore</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Écritures Cloud</span>
             <span className="text-xs font-black text-slate-700">{firestore.writesPercentage}%</span>
           </div>
           <div className="space-y-1">
@@ -410,7 +410,7 @@ export const DatabaseHealthTab: React.FC = () => {
         {/* Gauge 3: Cloud Storage */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Stockage Base</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Stockage Base Cloud</span>
             <span className="text-xs font-black text-slate-700">{firestore.storagePercentage}%</span>
           </div>
           <div className="space-y-1">
@@ -432,7 +432,7 @@ export const DatabaseHealthTab: React.FC = () => {
         {/* Gauge 4: Gemini AI Assistant */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quota IA Dona (Gemini)</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quota Assistant IA Dona</span>
             <span className="text-xs font-black text-slate-700">{gemini.requestsPercentage}%</span>
           </div>
           <div className="space-y-1">
@@ -462,12 +462,12 @@ export const DatabaseHealthTab: React.FC = () => {
             <div>
               <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-amber-600" />
-                Détail du Volume par Collection Firestore
+                Détail du Volume par Registre de Données
               </h3>
-              <p className="text-xs text-slate-500">Répartition du poids des données enregistrées dans votre base</p>
+              <p className="text-xs text-slate-500">Répartition du poids des données enregistrées dans votre base cloud</p>
             </div>
             <span className="text-xs font-bold bg-slate-100 px-2.5 py-1 rounded-lg text-slate-700">
-              Total : {firestore.totalDocumentsCount} docs
+              Total : {firestore.totalDocumentsCount} enregistrements
             </span>
           </div>
 
@@ -475,7 +475,7 @@ export const DatabaseHealthTab: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-400 font-bold">
-                  <th className="pb-2">Collection</th>
+                  <th className="pb-2">Registre / Module</th>
                   <th className="pb-2 text-right">Nombre d'Éléments</th>
                   <th className="pb-2 text-right">Poids Estimé</th>
                   <th className="pb-2 text-right">Part du Stockage</th>
@@ -529,7 +529,7 @@ export const DatabaseHealthTab: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Espace alloué sur ce terminal (Bureau, iPhone iOS ou Android) avec cache Firestore illimité et IndexedDB.
+              Espace alloué sur ce terminal (Bureau, iPhone iOS ou Android) avec cache sécurisé et persistance locale.
             </p>
 
             <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
@@ -615,10 +615,10 @@ export const DatabaseHealthTab: React.FC = () => {
           <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1.5">
             <div className="font-black flex items-center gap-1.5 text-amber-900">
               <ShieldCheck className="w-4 h-4 text-amber-600" />
-              <span>Garantie Zéro Écran Blanc & Cache Étendu</span>
+              <span>Garantie Haute Disponibilité & Cache Étendu</span>
             </div>
             <p className="text-[11px] leading-tight text-amber-800">
-              Le cache local utilise désormais IndexedDB haute capacité et le cache illimité Firestore. Vos données de caisse, produits et historiques sont conservés localement même en cas de coupure réseau ou de quota gratuit Firestore atteint.
+              Le cache local utilise désormais IndexedDB haute capacité et un cache hors-ligne étendu. Vos données de caisse, produits et historiques sont conservés localement même en cas de coupure réseau prolongée.
             </p>
           </div>
         </div>
@@ -637,7 +637,7 @@ export const DatabaseHealthTab: React.FC = () => {
                 Vérification d'Intégrité de la Base de Données
               </h3>
               <p className="text-[11px] text-slate-500">
-                Contrôle automatisé des comptes utilisateurs (validation unique, rôles) et cohérence des collections Firestore.
+                Contrôle automatisé des comptes utilisateurs (validation unique, rôles) et cohérence des registres de données.
               </p>
             </div>
           </div>
@@ -700,7 +700,7 @@ export const DatabaseHealthTab: React.FC = () => {
           </div>
         ) : (
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 text-center text-xs text-slate-500">
-            Cliquez sur <strong>"Lancer l'Audit d'Intégrité"</strong> pour analyser les collections Firestore en temps réel.
+            Cliquez sur <strong>"Lancer l'Audit d'Intégrité"</strong> pour analyser les registres de données en temps réel.
           </div>
         )}
       </div>

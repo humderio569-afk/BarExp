@@ -32,6 +32,8 @@ export interface CartItem {
   product: Product;
   quantity: number;
   discount: number; // Montant de remise sur cet article
+  customUnitPrice?: number; // Prix unitaire personnalisé / négocié / libre / enchères
+  priceType?: 'standard' | 'negotiated' | 'auction' | 'custom'; // Type de tarification appliquée
   note?: string;
   selectedFlavor?: string; // Parfum / déclinaison sélectionné (rétrocompatible)
   selectedVariety?: string; // Variante / Déclinaison sélectionnée
@@ -82,7 +84,8 @@ export interface NetworkStatus {
 
 export interface Expense {
   id: string;
-  category: 'Approvisionnement' | 'Électricité & Eau' | 'Salaires' | 'Glaçons' | 'Entretien' | 'Autre';
+  title?: string; // Nom / Intitulé de la dépense (ex: "Carburant génératrice", "Achat glaçons")
+  category: 'Approvisionnement' | 'Électricité & Eau' | 'Salaires' | 'Glaçons' | 'Entretien' | 'Transport' | 'Taxes & DGI' | 'Loyer' | 'Autre' | string;
   description: string;
   amount: number;
   date: string; // YYYY-MM-DD
@@ -144,6 +147,13 @@ export type AuditAction =
 export type SubscriptionBillingCycle = 'monthly' | 'annual' | 'lifetime' | 'custom';
 export type PlanType = SubscriptionBillingCycle;
 export type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'lifetime' | 'suspended';
+
+export interface RoleLabelsConfig {
+  admin?: string; // Libellé personnalisé pour Administrateur (ex: 'Gérant', 'Directeur', 'Pharmacien Titulaire')
+  manager?: string; // Libellé personnalisé pour Superviseur / Manager (ex: 'Superviseur', 'Chef de Salle')
+  employee?: string; // Libellé personnalisé pour Employé (ex: 'Caissier(e)', 'Opérateur Cyber', 'Pompiste', 'Serveur')
+  cashier?: string; // Libellé par défaut du poste de caisse (ex: 'Caisse Principale')
+}
 
 export interface QuotaFeePolicy {
   chargeOverage: boolean; // Si true: facture des frais supplémentaires lors du dépassement de quota
@@ -257,6 +267,8 @@ export interface Company {
   tagline?: string;
   taxRate?: number;
   cashierName?: string;
+  cashierUserId?: string; // UID de l'utilisateur ou 'self_admin'
+  customRoleLabels?: RoleLabelsConfig; // Noms personnalisés des rôles pour cette entreprise
   nifCif?: string;
   autoApprovePreRegistered?: boolean;
   allowCameraScanner?: boolean; // Seul le Super Admin peut activer ou désactiver le scanner caméra
@@ -282,6 +294,7 @@ export interface PreRegisteredEmployee {
   name: string;
   email: string;
   role: 'admin' | 'manager' | 'employee';
+  customRoleTitle?: string; // Libellé de poste personnalisé (ex: "Caissière Principale", "Opérateur")
   pinCode?: string; // 4 or 6 digit PIN code for rapid POS access
   permissions: UserPermissions;
   status: 'pre_registered' | 'claimed' | 'suspended';
@@ -309,6 +322,8 @@ export interface BarSettings {
   currency: string; // Default: 'G' or 'HTG'
   taxRate: number; // Default: 0% or 10%
   cashierName: string;
+  cashierUserId?: string; // UID de l'utilisateur assigné à la caisse ou 'self_admin'
+  customRoleLabels?: RoleLabelsConfig; // Noms personnalisés des rôles pour cet établissement
   enableStockAlerts: boolean;
   businessSector?: BusinessSector;
   businessSectorName?: string;
@@ -432,6 +447,7 @@ export interface AppUser {
   displayName: string;
   photoURL?: string;
   role: UserRole;
+  customRoleTitle?: string; // Libellé personnalisé pour cet utilisateur (ex: "Caissière Principale", "Opérateur")
   status: UserStatus;
   permissions: UserPermissions;
   companyId?: string;

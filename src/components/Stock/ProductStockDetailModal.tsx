@@ -452,25 +452,25 @@ export const ProductStockDetailModal: React.FC<ProductStockDetailModalProps> = (
                             <div className="font-bold text-slate-900 truncate">
                               {log.reason || (isPositive ? 'Réapprovisionnement' : isSale ? 'Vente en caisse' : 'Ajustement')}
                             </div>
-                            <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1.5 flex-wrap mt-0.5">
                               <span>{new Date(log.timestamp).toLocaleString('fr-FR')}</span>
                               <span>•</span>
-                              <span>Par : {log.recordedBy || 'Système'}</span>
+                              <span className="font-medium text-slate-700">Par: {log.recordedBy || 'Système'}</span>
                             </div>
                           </div>
                         </div>
 
                         <div className="text-right shrink-0">
                           <span
-                            className={`font-black ${
+                            className={`font-black text-sm ${
                               isPositive ? 'text-emerald-600' : 'text-slate-800'
                             }`}
                           >
                             {isPositive ? `+${log.quantity}` : `-${log.quantity}`} {product.unit}
                           </span>
-                          <span className="text-[10px] text-slate-400 block">
-                            Solde : {log.newStock}
-                          </span>
+                          <div className="text-[10px] text-slate-500 mt-0.5 bg-slate-100 px-2 py-0.5 rounded-md font-semibold">
+                            Avant: <span className="font-bold text-slate-700">{log.previousStock}</span> → Après: <span className="font-black text-slate-900">{log.newStock}</span>
+                          </div>
                         </div>
                       </div>
                     );

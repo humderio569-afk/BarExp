@@ -52,6 +52,7 @@ export const PreRegistrationTab: React.FC = () => {
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formRole, setFormRole] = useState<'admin' | 'manager' | 'employee'>('employee');
+  const [formCustomRoleTitle, setFormCustomRoleTitle] = useState('');
   const [formPin, setFormPin] = useState('');
   const [visiblePins, setVisiblePins] = useState<Record<string, boolean>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -132,6 +133,7 @@ export const PreRegistrationTab: React.FC = () => {
     setFormName('');
     setFormEmail('');
     setFormRole('employee');
+    setFormCustomRoleTitle('');
     const randomPin = Math.floor(1000 + Math.random() * 9000).toString();
     setFormPin(randomPin);
     handleRoleChange('employee');
@@ -144,6 +146,7 @@ export const PreRegistrationTab: React.FC = () => {
     setFormName(item.name);
     setFormEmail(item.email);
     setFormRole(item.role);
+    setFormCustomRoleTitle(item.customRoleTitle || '');
     setFormPin(item.pinCode || '');
     setCanAccessStock(item.permissions?.canAccessStock !== false);
     setCanManageStock(item.permissions?.canManageStock === true);
@@ -213,6 +216,7 @@ export const PreRegistrationTab: React.FC = () => {
           name: formName.trim(),
           email: formEmail.trim().toLowerCase(),
           role: formRole,
+          customRoleTitle: formCustomRoleTitle.trim() || undefined,
           pinCode: formPin.trim() || undefined,
           permissions: perms,
         });
@@ -222,6 +226,7 @@ export const PreRegistrationTab: React.FC = () => {
           name: formName.trim(),
           email: formEmail.trim().toLowerCase(),
           role: formRole,
+          customRoleTitle: formCustomRoleTitle.trim() || undefined,
           pinCode: formPin.trim() || undefined,
           permissions: perms,
           companyId: activeCompany?.id,
@@ -406,8 +411,26 @@ export const PreRegistrationTab: React.FC = () => {
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-emerald-100 text-emerald-800'
                       }`}>
-                        {item.role === 'admin' ? 'Admin' : item.role === 'manager' ? 'Gérant' : 'Serveur / Caisse'}
+                        {item.role === 'admin' 
+                          ? (settings.customRoleLabels?.admin?.toUpperCase() || 'ADMIN') 
+                          : item.role === 'manager' 
+                          ? (settings.customRoleLabels?.manager?.toUpperCase() || 'GÉRANT') 
+                          : (settings.customRoleLabels?.employee?.toUpperCase() || 'SERVEUR / CAISSE')}
                       </span>
+
+                      {/* Custom Job Title Badge */}
+                      {item.customRoleTitle && (
+                        <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                          {item.customRoleTitle}
+                        </span>
+                      )}
+
+                      {/* Cashier Badge */}
+                      {(settings.cashierUserId === item.id || settings.cashierName === item.name) && (
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.5 rounded">
+                          💳 Caissier(e) Actif
+                        </span>
+                      )}
 
                       {/* Status */}
                       {isClaimed ? (
@@ -609,9 +632,15 @@ export const PreRegistrationTab: React.FC = () => {
                       onChange={(e) => handleRoleChange(e.target.value as 'admin' | 'manager' | 'employee')}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     >
-                      <option value="employee">Serveur / Caissier</option>
-                      <option value="manager">Gérant / Superviseur</option>
-                      <option value="admin">Administrateur</option>
+                      <option value="employee">
+                        {settings.customRoleLabels?.employee ? `${settings.customRoleLabels.employee} (Employé)` : 'Serveur / Caissier'}
+                      </option>
+                      <option value="manager">
+                        {settings.customRoleLabels?.manager ? `${settings.customRoleLabels.manager} (Superviseur)` : 'Gérant / Superviseur'}
+                      </option>
+                      <option value="admin">
+                        {settings.customRoleLabels?.admin ? `${settings.customRoleLabels.admin} (Admin)` : 'Administrateur'}
+                      </option>
                     </select>
                   </div>
 
@@ -636,6 +665,21 @@ export const PreRegistrationTab: React.FC = () => {
                       className="w-full px-3 py-2 bg-slate-900 border border-slate-800 text-amber-400 font-mono tracking-widest font-black rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
+                </div>
+
+                {/* Custom Role Title / Poste Spécifique */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                    <span>Intitulé du Poste / Métier Spécifique (Optionnel)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Ex: Caissière Principale, Barman, Pompiste</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Caissière Principale"
+                    value={formCustomRoleTitle}
+                    onChange={(e) => setFormCustomRoleTitle(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
                 </div>
 
                 {/* Permissions Grid */}

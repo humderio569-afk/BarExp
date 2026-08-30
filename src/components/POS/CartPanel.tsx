@@ -3,7 +3,8 @@ import { useBar } from '../../context/BarContext';
 import { PaymentModal } from './PaymentModal';
 import { ReceiptModal } from './ReceiptModal';
 import { QuickQuantityModal } from './QuickQuantityModal';
-import { Sale, Product } from '../../types';
+import { CustomPriceModal } from './CustomPriceModal';
+import { Sale, Product, CartItem } from '../../types';
 import { 
   ShoppingBag, 
   Trash2, 
@@ -19,13 +20,17 @@ import {
   Sparkles,
   AlertTriangle,
   AlertCircle,
-  Calculator
+  Calculator,
+  Gavel,
+  Coins,
+  Edit2
 } from 'lucide-react';
 
 export const CartPanel: React.FC = () => {
   const {
     cart,
     updateCartItemQuantity,
+    updateCartItemUnitPrice,
     applyCartItemDiscount,
     removeFromCart,
     clearCart,
@@ -49,6 +54,7 @@ export const CartPanel: React.FC = () => {
     quantity: number;
     selectedFlavor?: string;
   } | null>(null);
+  const [editingPriceItem, setEditingPriceItem] = useState<CartItem | null>(null);
 
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
@@ -164,27 +170,38 @@ export const CartPanel: React.FC = () => {
             </div>
           ) : (
             cart.map(item => {
-              const itemSubtotal = item.product.price * item.quantity;
+              const unitPrice = item.customUnitPrice !== undefined ? item.customUnitPrice : item.product.price;
+              const isCustomPrice = item.customUnitPrice !== undefined;
+              const isAuction = item.priceType === 'auction';
+              const isNegotiated = item.priceType === 'negotiated';
+              
+              const itemSubtotal = unitPrice * item.quantity;
               const itemDiscountTotal = item.discount * item.quantity;
-              const itemFinalPrice = itemSubtotal - itemDiscountTotal;
+              const itemFinalPrice = Math.max(0, itemSubtotal - itemDiscountTotal);
 
               return (
                 <div
-                  key={item.product.id}
-                  className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-2xs hover:border-slate-300 transition"
+                  key={`${item.product.id}-${item.selectedFlavor || 'default'}`}
+                  className={`border rounded-xl p-3 shadow-2xs transition ${
+                    isAuction
+                      ? 'bg-purple-50/70 border-purple-200 hover:border-purple-300'
+                      : isNegotiated
+                      ? 'bg-amber-50/70 border-amber-200 hover:border-amber-300'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     {/* Checkbox to uncheck / remove from cart */}
                     <button
-                      onClick={() => removeFromCart(item.product.id)}
+                      onClick={() => removeFromCart(item.product.id, item.selectedFlavor)}
                       className="mt-0.5 w-5 h-5 rounded border border-amber-500 bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 hover:bg-red-500 hover:border-red-500 hover:text-white transition shadow-2xs"
                       title="Décocher pour retirer de la commande"
                     >
                       <X className="w-3.5 h-3.5 stroke-[3]" />
                     </button>
 
-                    <div className="flex-1">
-                      <h4 className="font-bold text-slate-900 text-sm leading-snug">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-slate-900 text-sm leading-snug truncate">
                         {item.product.name}
                       </h4>
 
@@ -196,17 +213,43 @@ export const CartPanel: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex items-center space-x-2 text-xs text-slate-500 mt-0.5">
-                        <span>{item.product.price.toLocaleString()} {settings.currency} /{item.product.unit}</span>
+                      {/* Price display with clickable custom price trigger */}
+                      <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingPriceItem(item)}
+                          className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md font-bold transition cursor-pointer ${
+                            isAuction
+                              ? 'bg-purple-100 text-purple-900 border border-purple-300 hover:bg-purple-200'
+                              : isNegotiated
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
+                              : 'bg-white text-slate-700 border border-slate-200 hover:border-amber-400 hover:bg-amber-50'
+                          }`}
+                          title="Cliquez pour modifier le prix (Prix incité, négocié ou enchères)"
+                        >
+                          {isAuction ? <Gavel className="w-3 h-3 text-purple-700" /> : <Tag className="w-3 h-3 text-amber-600" />}
+                          <span>{unitPrice.toLocaleString()} {settings.currency}</span>
+                          <Edit2 className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+                        </button>
+                        <span className="text-[11px] text-slate-400">/{item.product.unit}</span>
+
+                        {isCustomPrice && (
+                          <span className={`text-[10px] font-black px-1.5 py-0.2 rounded uppercase ${
+                            isAuction ? 'bg-purple-200 text-purple-950' : 'bg-amber-200 text-amber-950'
+                          }`}>
+                            {isAuction ? 'Enchère' : 'Négocié'}
+                          </span>
+                        )}
+
                         {item.discount > 0 && (
-                          <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                          <span className="text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded text-[11px]">
                             -{item.discount} {settings.currency}/u
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="text-right flex flex-col items-end justify-between">
+                    <div className="text-right flex flex-col items-end justify-between shrink-0">
                       <button
                         onClick={() => removeFromCart(item.product.id, item.selectedFlavor)}
                         className="text-slate-400 hover:text-red-500 p-1 rounded-lg transition"
@@ -223,18 +266,35 @@ export const CartPanel: React.FC = () => {
                   {/* Quantity & Actions Bar */}
                   <div className="mt-3 pt-2 border-t border-slate-200 flex items-center justify-between">
                     
-                    {/* Discount Modifier Toggle */}
-                    <button
-                      onClick={() => setEditingDiscountId(editingDiscountId === item.product.id ? null : item.product.id)}
-                      className={`text-xs px-2 py-1 rounded-md flex items-center space-x-1 transition ${
-                        item.discount > 0
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-                          : 'bg-slate-200/80 text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <Tag className="w-3 h-3" />
-                      <span>{item.discount > 0 ? `Remise ${item.discount}${settings.currency}` : 'Remise'}</span>
-                    </button>
+                    <div className="flex items-center space-x-1.5">
+                      {/* Price Modifier Trigger */}
+                      <button
+                        onClick={() => setEditingPriceItem(item)}
+                        className={`text-xs px-2 py-1 rounded-md flex items-center space-x-1 transition cursor-pointer ${
+                          isCustomPrice
+                            ? isAuction
+                              ? 'bg-purple-100 text-purple-900 border border-purple-300 font-bold'
+                              : 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
+                            : 'bg-slate-200/80 text-slate-600 hover:text-slate-900'
+                        }`}
+                        title="Ajuster le prix de vente unitaire (Négocié / Enchères)"
+                      >
+                        {isAuction ? <Gavel className="w-3 h-3 text-purple-700" /> : <Tag className="w-3 h-3 text-amber-600" />}
+                        <span>{isAuction ? 'Enchère' : isNegotiated ? 'Négocié' : 'Prix Libre'}</span>
+                      </button>
+
+                      {/* Discount Modifier Toggle */}
+                      <button
+                        onClick={() => setEditingDiscountId(editingDiscountId === item.product.id ? null : item.product.id)}
+                        className={`text-xs px-2 py-1 rounded-md flex items-center space-x-1 transition ${
+                          item.discount > 0
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                            : 'bg-slate-200/80 text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span>{item.discount > 0 ? `-${item.discount}${settings.currency}` : 'Remise'}</span>
+                      </button>
+                    </div>
 
                     {/* Quantity Controls with Direct Typing and Numpad Selector */}
                     <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
@@ -296,7 +356,7 @@ export const CartPanel: React.FC = () => {
                       <input
                         type="number"
                         min="0"
-                        max={item.product.price}
+                        max={unitPrice}
                         value={item.discount || ''}
                         onChange={(e) => applyCartItemDiscount(item.product.id, Number(e.target.value))}
                         placeholder="0"
@@ -394,6 +454,26 @@ export const CartPanel: React.FC = () => {
               newFlavor || editingQuantityItem.selectedFlavor
             );
             setEditingQuantityItem(null);
+          }}
+        />
+      )}
+
+      {/* Custom Price / Auction / Negotiated Price Modal */}
+      {editingPriceItem && (
+        <CustomPriceModal
+          product={editingPriceItem.product}
+          currentUnitPrice={editingPriceItem.customUnitPrice !== undefined ? editingPriceItem.customUnitPrice : editingPriceItem.product.price}
+          currentPriceType={editingPriceItem.priceType || 'standard'}
+          currency={settings.currency}
+          onClose={() => setEditingPriceItem(null)}
+          onConfirm={(newUnitPrice, priceType) => {
+            updateCartItemUnitPrice(
+              editingPriceItem.product.id,
+              newUnitPrice,
+              editingPriceItem.selectedFlavor,
+              priceType
+            );
+            setEditingPriceItem(null);
           }}
         />
       )}

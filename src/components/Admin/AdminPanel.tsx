@@ -228,6 +228,7 @@ export const AdminPanel: React.FC = () => {
   // Edit Permissions Modal state
   const [editingUser, setEditingUser] = useState<AppUser | null>(null);
   const [editDisplayName, setEditDisplayName] = useState('');
+  const [editCustomRoleTitle, setEditCustomRoleTitle] = useState('');
   const [editRole, setEditRole] = useState<UserRole>('employee');
   const [editPerms, setEditPerms] = useState<UserPermissions>({
     canAccessPOS: true,
@@ -338,6 +339,7 @@ export const AdminPanel: React.FC = () => {
   const handleOpenEditUser = (user: AppUser) => {
     setEditingUser(user);
     setEditDisplayName(user.displayName || '');
+    setEditCustomRoleTitle(user.customRoleTitle || '');
     setEditRole(user.role);
     setEditPerms(user.permissions || {
       canAccessPOS: true,
@@ -358,7 +360,8 @@ export const AdminPanel: React.FC = () => {
       editingUser.uid,
       editPerms,
       editRole,
-      editDisplayName.trim() || editingUser.displayName
+      editDisplayName.trim() || editingUser.displayName,
+      editCustomRoleTitle.trim() || undefined
     );
     setEditingUser(null);
   };
@@ -503,30 +506,30 @@ export const AdminPanel: React.FC = () => {
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 animate-fadeIn pb-24 md:pb-8">
       
       {/* Profile & Direction Header Banner */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5 min-w-0">
           {currentUser?.photoURL ? (
             <img
               src={currentUser.photoURL}
               alt={currentUser.displayName}
-              className="w-12 h-12 rounded-2xl border border-slate-200 object-cover shadow-xs shrink-0"
+              className="w-11 h-11 rounded-xl border border-slate-200 object-cover shrink-0"
             />
           ) : (
-            <div className="w-12 h-12 rounded-2xl bg-slate-900 text-amber-400 font-black text-lg flex items-center justify-center shadow-xs shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-slate-900 text-amber-400 font-bold text-base flex items-center justify-center shrink-0">
               {currentUser?.displayName ? currentUser.displayName.charAt(0).toUpperCase() : 'A'}
             </div>
           )}
           <div className="min-w-0">
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <h1 className="text-base sm:text-lg font-black text-slate-900 truncate">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 truncate">
                 {currentUser?.displayName || 'Direction'}
               </h1>
               {currentUser?.role === 'admin' ? (
-                <span className="bg-slate-900 text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0">
-                  <ShieldCheck className="w-2.5 h-2.5" /> ADMINISTRATEUR ÉTABLISSEMENT
+                <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[10px] font-bold px-2 py-0.5 rounded-md inline-flex items-center gap-1 shrink-0">
+                  <ShieldCheck className="w-3 h-3 text-slate-600" /> DIRECTION / ADMIN
                 </span>
               ) : (
-                <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shrink-0">
+                <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-medium px-2 py-0.5 rounded-md inline-flex items-center gap-1 shrink-0">
                   EMPLOYÉ
                 </span>
               )}
@@ -538,41 +541,43 @@ export const AdminPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Action button: Logout */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Action button: Logout (spaced & with confirmation) */}
+        <div className="flex items-center gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100">
           <button
             onClick={() => {
               if (confirm('Souhaitez-vous vous déconnecter de votre session ?')) {
                 logout();
               }
             }}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 rounded-xl text-xs font-bold transition cursor-pointer border border-red-200/80 shadow-2xs"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-700 rounded-lg text-xs font-semibold transition cursor-pointer border border-slate-200 hover:border-red-200"
             title="Se déconnecter de l'application"
           >
-            <LogOut className="w-3.5 h-3.5 text-red-600 shrink-0" />
+            <LogOut className="w-3.5 h-3.5 shrink-0" />
             <span>Déconnexion</span>
           </button>
         </div>
       </div>
 
-      {/* Modern Ergonomic Navigation Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+      {/* Clean Navigation Tabs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center justify-center space-x-1.5 px-2 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer text-center relative ${
+              className={`flex items-center justify-center space-x-1.5 px-2 py-2 rounded-lg text-xs font-semibold transition cursor-pointer text-center relative ${
                 isActive
-                  ? 'bg-slate-900 text-amber-400 font-black shadow-xs'
-                  : 'bg-white/80 text-slate-600 hover:text-slate-900 hover:bg-white shadow-2xs'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
             >
-              <span className={isActive ? 'text-amber-400 shrink-0' : 'text-slate-500 shrink-0'}>{tab.icon}</span>
+              <span className="shrink-0">{tab.icon}</span>
               <span className="truncate">{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span className="bg-red-500 text-white px-1.5 py-0.2 rounded-full text-[10px] font-black shrink-0 ml-0.5">
+                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold shrink-0 ml-0.5 ${
+                  isActive ? 'bg-slate-950 text-amber-400' : 'bg-slate-900 text-white'
+                }`}>
                   {tab.badge}
                 </span>
               )}
@@ -593,16 +598,16 @@ export const AdminPanel: React.FC = () => {
 
       {/* ================= TAB 2: USERS & PERMISSIONS ================= */}
       {activeTab === 'users' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           
-          {/* Top Policy Bar */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Top Policy Bar - Unified state styles */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] font-bold uppercase text-slate-400 block tracking-wider">Politique d'Accès Google</span>
-              <p className="text-xs font-bold text-slate-900 mt-0.5">
+              <span className="text-[10px] font-semibold uppercase text-slate-400 block tracking-wider">Politique d'Accès</span>
+              <p className="text-xs text-slate-800 mt-0.5">
                 {settings.registrationMode === 'whitelist_only'
                   ? 'Mode Whitelist : Seules les adresses pré-inscrites peuvent se connecter.'
-                  : 'Mode Approbation : Tout membre du personnel peut demander l\'accès, soumis à votre validation.'}
+                  : 'Mode Approbation : Demandes soumises à la validation de la direction.'}
               </p>
             </div>
 
@@ -610,10 +615,10 @@ export const AdminPanel: React.FC = () => {
               <button
                 type="button"
                 onClick={() => updateSettings({ registrationMode: 'approval_required' })}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer border ${
                   settings.registrationMode !== 'whitelist_only'
-                    ? 'bg-amber-500 text-slate-950 shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'
                 }`}
               >
                 Approbation Manuelle
@@ -621,10 +626,10 @@ export const AdminPanel: React.FC = () => {
               <button
                 type="button"
                 onClick={() => updateSettings({ registrationMode: 'whitelist_only' })}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer border ${
                   settings.registrationMode === 'whitelist_only'
-                    ? 'bg-slate-900 text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-slate-200'
                 }`}
               >
                 Whitelist Stricte
@@ -633,33 +638,33 @@ export const AdminPanel: React.FC = () => {
           </div>
 
           {/* Sub tabs: Members / Pending / Suspended / Add by email */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-100/80 p-1.5 rounded-2xl border border-slate-200/80">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
             <button
               type="button"
               onClick={() => setUserSubTab('members')}
-              className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
                 userSubTab === 'members'
-                  ? 'bg-slate-900 text-white shadow-xs font-black'
-                  : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-900'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-transparent text-slate-600 hover:bg-white hover:text-slate-900'
               }`}
             >
-              <Users className="w-3.5 h-3.5 text-amber-500" />
+              <Users className="w-3.5 h-3.5" />
               <span>Équipe Active ({approvedUsers.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setUserSubTab('pending')}
-              className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
                 userSubTab === 'pending'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
-                  : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-900'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-transparent text-slate-600 hover:bg-white hover:text-slate-900'
               }`}
             >
-              <Clock className="w-3.5 h-3.5 text-amber-700" />
+              <Clock className="w-3.5 h-3.5" />
               <span>En Attente</span>
               {pendingUsers.length > 0 && (
-                <span className="px-1.5 py-0.2 bg-red-600 text-white text-[10px] font-black rounded-full ml-1">
+                <span className="px-1.5 py-0.2 bg-slate-900 text-white text-[10px] font-bold rounded-full ml-1">
                   {pendingUsers.length}
                 </span>
               )}
@@ -668,77 +673,84 @@ export const AdminPanel: React.FC = () => {
             <button
               type="button"
               onClick={() => setUserSubTab('suspended')}
-              className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
                 userSubTab === 'suspended'
-                  ? 'bg-orange-600 text-white shadow-xs font-black'
-                  : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-900'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-transparent text-slate-600 hover:bg-white hover:text-slate-900'
               }`}
             >
-              <UserX className="w-3.5 h-3.5 text-orange-500" />
+              <UserX className="w-3.5 h-3.5" />
               <span>Suspendus ({suspendedUsers.length})</span>
             </button>
 
             <button
               type="button"
               onClick={() => setUserSubTab('add')}
-              className={`py-2 px-3 rounded-xl text-xs font-bold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition cursor-pointer text-center flex items-center justify-center space-x-1.5 ${
                 userSubTab === 'add'
-                  ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
-                  : 'bg-white/80 text-slate-600 hover:bg-white hover:text-slate-900'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-transparent text-slate-600 hover:bg-white hover:text-slate-900'
               }`}
             >
-              <UserPlus className="w-3.5 h-3.5 text-amber-600" />
+              <UserPlus className="w-3.5 h-3.5" />
               <span>Pré-inscrire</span>
             </button>
           </div>
 
           {emailSuccessMsg && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-2 animate-fadeIn">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-3 bg-slate-100 border border-slate-200 text-slate-800 text-xs font-medium rounded-xl flex items-center gap-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 text-slate-700 shrink-0" />
               <span>{emailSuccessMsg}</span>
             </div>
           )}
 
           {/* Sub-tab 1: Members Table */}
           {userSubTab === 'members' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               <div className="divide-y divide-slate-100">
                 {approvedUsers.map((user) => {
                   const isSuper = user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
 
                   return (
-                    <div key={user.uid} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
+                    <div key={user.uid} className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
                       <div className="flex items-center space-x-3 min-w-0">
                         {user.photoURL ? (
                           <img
                             src={user.photoURL}
                             alt={user.displayName}
-                            className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
+                            className="w-9 h-9 rounded-full border border-slate-200 object-cover shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-slate-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-slate-900 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0">
                             {user.displayName.charAt(0)}
                           </div>
                         )}
                         <div className="truncate">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center flex-wrap gap-1.5">
                             <span className="font-bold text-slate-900 text-xs truncate">{user.displayName}</span>
                             {isSuper ? (
-                              <span className="bg-amber-100 text-amber-900 text-[9px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                <Sparkles className="w-2.5 h-2.5" /> PROPRIÉTAIRE
+                              <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                PROPRIÉTAIRE
                               </span>
                             ) : user.role === 'admin' ? (
-                              <span className="bg-slate-900 text-amber-400 text-[9px] font-black px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                                <ShieldCheck className="w-2.5 h-2.5" /> ADMIN
+                              <span className="bg-slate-100 text-slate-800 border border-slate-200 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                {settings.customRoleLabels?.admin ? settings.customRoleLabels.admin.toUpperCase() : 'ADMIN'}
                               </span>
                             ) : (
-                              <span className="bg-slate-100 text-slate-700 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                EMPLOYÉ
+                              <span className="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-medium px-1.5 py-0.5 rounded">
+                                {settings.customRoleLabels?.employee ? settings.customRoleLabels.employee.toUpperCase() : 'EMPLOYÉ'}
                               </span>
                             )}
-                            <span className="bg-emerald-50 text-emerald-700 text-[9px] font-bold px-1.5 py-0.2 rounded">
-                              Validé permanent
-                            </span>
+                            {user.customRoleTitle && (
+                              <span className="bg-slate-50 text-slate-700 border border-slate-200 text-[9px] font-medium px-1.5 py-0.5 rounded">
+                                {user.customRoleTitle}
+                              </span>
+                            )}
+                            {(settings.cashierUserId === user.uid || settings.cashierName === user.displayName) && (
+                              <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                                Caissier(e)
+                              </span>
+                            )}
                           </div>
                           <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
                         </div>
@@ -747,28 +759,28 @@ export const AdminPanel: React.FC = () => {
                       <div className="flex items-center space-x-2 self-end sm:self-center">
                         <button
                           onClick={() => handleOpenEditUser(user)}
-                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center space-x-1 cursor-pointer"
                         >
                           <UserCog className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Droits & Rôle</span>
+                          <span>Droits</span>
                         </button>
                         {!isSuper && (
                           <button
                             onClick={() => handleSuspend(user)}
-                            className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold rounded-xl transition flex items-center space-x-1 cursor-pointer border border-orange-200"
-                            title="Suspendre temporairement l'accès de cet utilisateur"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center space-x-1 cursor-pointer border border-slate-200"
+                            title="Suspendre temporairement l'accès"
                           >
-                            <UserX className="w-3.5 h-3.5 text-orange-600" />
+                            <UserX className="w-3.5 h-3.5 text-slate-500" />
                             <span>Suspendre</span>
                           </button>
                         )}
                         {!isSuper && (
                           <button
                             onClick={() => handleDeleteUser(user.uid, user.email)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer ml-1"
                             title="Supprimer définitivement"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -781,54 +793,51 @@ export const AdminPanel: React.FC = () => {
 
           {/* Sub-tab 2: Pending Requests */}
           {userSubTab === 'pending' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               {pendingUsers.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">
-                  <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2 opacity-80" />
+                  <CheckCircle2 className="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-80" />
                   <p className="text-xs font-bold text-slate-600">Aucune demande en attente</p>
-                  <p className="text-[11px]">Toutes les nouvelles demandes de validation ont été traitées.</p>
+                  <p className="text-[11px] text-slate-400">Toutes les demandes de validation ont été traitées.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {pendingUsers.map((user) => (
-                    <div key={user.uid} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
+                    <div key={user.uid} className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
                       <div className="flex items-center space-x-3 min-w-0">
                         {user.photoURL ? (
                           <img
                             src={user.photoURL}
                             alt={user.displayName}
-                            className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
+                            className="w-9 h-9 rounded-full border border-slate-200 object-cover shrink-0"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-slate-900 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0">
                             {user.displayName.charAt(0)}
                           </div>
                         )}
                         <div className="truncate">
                           <h4 className="font-bold text-slate-900 text-xs truncate">{user.displayName}</h4>
                           <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
-                          <span className="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded font-bold">
-                            En attente de validation unique
-                          </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2 pt-2 border-t border-slate-100">
+                      <div className="flex items-center space-x-2 pt-2 border-t sm:border-t-0 border-slate-100">
                         <button
                           onClick={() => handleApproveEmployee(user.uid)}
-                          className="flex-1 py-1.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                          className="py-1 px-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
                         >
                           Valider Employé
                         </button>
                         <button
                           onClick={() => handleApproveAdmin(user.uid)}
-                          className="flex-1 py-1.5 px-3 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl transition cursor-pointer"
+                          className="py-1 px-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg transition cursor-pointer"
                         >
                           Valider Admin
                         </button>
                         <button
                           onClick={() => handleReject(user.uid)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer ml-1"
                           title="Refuser"
                         >
                           <UserX className="w-4 h-4" />
@@ -843,34 +852,34 @@ export const AdminPanel: React.FC = () => {
 
           {/* Sub-tab 3: Suspended Users */}
           {userSubTab === 'suspended' && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
               {suspendedUsers.length === 0 ? (
                 <div className="p-8 text-center text-slate-400">
-                  <UserCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                  <UserCheck className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                   <p className="text-xs font-bold text-slate-600">Aucun compte suspendu</p>
-                  <p className="text-[11px]">Tous les employés actifs ont un accès opérationnel normal.</p>
+                  <p className="text-[11px] text-slate-400">Tous les employés actifs ont un accès opérationnel normal.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
                   {suspendedUsers.map((user) => (
-                    <div key={user.uid} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
+                    <div key={user.uid} className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
                       <div className="flex items-center space-x-3 min-w-0">
                         {user.photoURL ? (
                           <img
                             src={user.photoURL}
                             alt={user.displayName}
-                            className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0 grayscale"
+                            className="w-9 h-9 rounded-full border border-slate-200 object-cover shrink-0 grayscale"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-slate-400 text-white font-black text-sm flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-slate-400 text-white font-bold text-xs flex items-center justify-center shrink-0">
                             {user.displayName.charAt(0)}
                           </div>
                         )}
                         <div className="truncate">
                           <div className="flex items-center space-x-2">
                             <span className="font-bold text-slate-900 text-xs truncate">{user.displayName}</span>
-                            <span className="bg-orange-100 text-orange-800 text-[9px] font-black px-2 py-0.5 rounded-full">
-                              ACCÈS SUSPENDU
+                            <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[9px] font-semibold px-1.5 py-0.2 rounded">
+                              SUSPENDU
                             </span>
                           </div>
                           <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
@@ -880,14 +889,14 @@ export const AdminPanel: React.FC = () => {
                       <div className="flex items-center space-x-2 self-end sm:self-center">
                         <button
                           onClick={() => handleReactivate(user)}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition flex items-center space-x-1 cursor-pointer shadow-xs"
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition flex items-center space-x-1 cursor-pointer"
                         >
                           <UserCheck className="w-3.5 h-3.5" />
-                          <span>Réactiver l'Accès</span>
+                          <span>Réactiver</span>
                         </button>
                         <button
                           onClick={() => handleDeleteUser(user.uid, user.email)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer ml-1"
                           title="Supprimer définitivement"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -900,19 +909,16 @@ export const AdminPanel: React.FC = () => {
             </div>
           )}
 
-          {/* Sub-tab 3: Add member by email */}
+          {/* Sub-tab 4: Add member by email */}
           {userSubTab === 'add' && (
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs max-w-xl space-y-4">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 max-w-xl space-y-4">
               <div>
                 <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Pré-autoriser un utilisateur</h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  L'utilisateur pourra se connecter directement avec son compte Google sans attendre d'approbation manuelle.
-                </p>
               </div>
 
-              <form onSubmit={handleAddByEmail} className="space-y-4">
+              <form onSubmit={handleAddByEmail} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Adresse Email Google *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Adresse Email Google *</label>
                   <div className="relative">
                     <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                     <input
@@ -921,17 +927,17 @@ export const AdminPanel: React.FC = () => {
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       placeholder="nom.serveur@gmail.com"
-                      className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
+                      className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 rounded-lg text-xs font-medium focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Rôle Attribué</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Rôle Attribué</label>
                   <select
                     value={newEmailRole}
                     onChange={(e) => setNewEmailRole(e.target.value as UserRole)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-900 rounded-lg text-xs font-medium focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
                   >
                     <option value="employee">Employé (Prise de commande, Stock en rayon)</option>
                     <option value="admin">Administrateur (Gestion complète et Paramètres)</option>
@@ -942,7 +948,7 @@ export const AdminPanel: React.FC = () => {
                   <button
                     type="submit"
                     disabled={addingEmailLoading}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <UserPlus className="w-4 h-4" />
                     <span>{addingEmailLoading ? 'Ajout en cours...' : 'Ajouter au répertoire'}</span>
@@ -950,7 +956,7 @@ export const AdminPanel: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setUserSubTab('members')}
-                    className="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                    className="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-medium transition cursor-pointer"
                   >
                     Annuler
                   </button>
@@ -964,20 +970,20 @@ export const AdminPanel: React.FC = () => {
 
       {/* ================= TAB 3: AI DONA & API CONFIGURATION ================= */}
       {activeTab === 'ai_config' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           
           {/* Main AI Settings Form */}
-          <form onSubmit={handleSaveAiConfig} className="space-y-6">
+          <form onSubmit={handleSaveAiConfig} className="space-y-4">
             
             {/* Top Overview & Status Diagnostic Card */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-xs shrink-0">
-                    <Bot className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold border border-slate-200 shrink-0">
+                    <Bot className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-slate-900 text-sm">Gestion de l'IA Dona & Clé API</h3>
+                    <h3 className="font-bold text-slate-900 text-sm">Gestion de l'IA Dona & Clé API</h3>
                     <p className="text-xs text-slate-500">
                       Moteur Gemini 3.7 Flash &bull; Multimodalité &bull; Recherche Web Grounding
                     </p>
@@ -989,7 +995,7 @@ export const AdminPanel: React.FC = () => {
                   type="button"
                   onClick={handleTestAiConnection}
                   disabled={aiTestStatus === 'testing'}
-                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-bold rounded-xl transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shrink-0 self-start sm:self-auto shadow-2xs"
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shrink-0 self-start sm:self-auto border border-slate-200"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${aiTestStatus === 'testing' ? 'animate-spin' : ''}`} />
                   <span>{aiTestStatus === 'testing' ? 'Test en cours...' : 'Tester la connexion API'}</span>
@@ -998,32 +1004,30 @@ export const AdminPanel: React.FC = () => {
 
               {/* Diagnostic Test Feedback Box */}
               {aiTestResult && (
-                <div className={`p-4 rounded-xl border text-xs animate-fadeIn ${
+                <div className={`p-3.5 rounded-lg border text-xs animate-fadeIn ${
                   aiTestStatus === 'success' 
-                    ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900' 
-                    : 'bg-red-50/90 border-red-200 text-red-900'
+                    ? 'bg-slate-50 border-slate-200 text-slate-900' 
+                    : 'bg-red-50 border-red-200 text-red-900'
                 }`}>
                   <div className="flex items-start gap-2.5">
                     {aiTestStatus === 'success' ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-4 h-4 text-slate-700 shrink-0 mt-0.5" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     )}
                     <div className="space-y-1 min-w-0">
-                      <p className="font-extrabold">
-                        {aiTestStatus === 'success' ? 'Connexion API Validée avec Succès !' : 'Échec de connexion API'}
+                      <p className="font-bold">
+                        {aiTestStatus === 'success' ? 'Connexion API Validée avec Succès' : 'Échec de connexion API'}
                       </p>
                       {aiTestStatus === 'success' ? (
                         <>
-                          <p className="text-emerald-800">
-                            Réponse du modèle : <em className="font-medium">"{aiTestResult.reply}"</em>
+                          <p className="text-slate-700">
+                            Réponse : <em className="font-medium">"{aiTestResult.reply}"</em>
                           </p>
-                          <div className="flex items-center gap-3 text-[10px] text-emerald-700 font-bold pt-1">
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium pt-0.5">
                             <span>Modèle : {aiTestResult.model}</span>
                             <span>&bull;</span>
                             <span>Latence : {aiTestResult.latencyMs} ms</span>
-                            <span>&bull;</span>
-                            <span>{aiTestResult.isCustomKey ? 'Clé personnalisée de l\'établissement' : 'Clé environnement système'}</span>
                           </div>
                         </>
                       ) : (
@@ -1035,17 +1039,17 @@ export const AdminPanel: React.FC = () => {
               )}
 
               {/* Grid: 2 Configuration Blocks */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
                 
                 {/* Block 1: API Key Configuration */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center space-x-2 pb-1 border-b border-slate-100">
-                    <KeyRound className="w-4 h-4 text-amber-600 shrink-0" />
-                    <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Clé d'API Gemini (Google AI Studio)</h4>
+                    <KeyRound className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Clé d'API Gemini</h4>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
                       Clé API Personnalisée (Optionnel)
                     </label>
                     <div className="relative">
@@ -1054,7 +1058,7 @@ export const AdminPanel: React.FC = () => {
                         value={customGeminiApiKey}
                         onChange={(e) => setCustomGeminiApiKey(e.target.value)}
                         placeholder="AIzaSy..."
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-mono px-3 py-2 pr-10 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
+                        className="w-full bg-slate-50 border border-slate-200 text-slate-900 font-mono px-3 py-2 pr-10 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
                       />
                       <button
                         type="button"
@@ -1062,24 +1066,20 @@ export const AdminPanel: React.FC = () => {
                         className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
                         title={showApiKey ? 'Masquer la clé' : 'Afficher la clé'}
                       >
-                        {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Laissez vide pour utiliser la clé API serveur par défaut de l'application. Vous pouvez obtenir une clé gratuite sur <a href="https://aistudio.google.com" target="_blank" rel="noreferrer" className="text-amber-600 underline font-bold">aistudio.google.com</a>.
-                    </p>
                   </div>
 
                   {/* Modules & Feature Switches */}
-                  <div className="space-y-2 pt-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Modules & Capacités Activées</label>
+                  <div className="space-y-1.5 pt-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Modules Activés</label>
                     
-                    <label className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition">
+                    <label className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
                       <div className="flex items-center space-x-2">
-                        <Bot className="w-4 h-4 text-amber-600 shrink-0" />
+                        <Bot className="w-4 h-4 text-slate-500 shrink-0" />
                         <div>
-                          <span className="text-xs font-bold text-slate-900 block">Assistant Dona Actif</span>
-                          <span className="text-[10px] text-slate-500 block">Permet aux utilisateurs autorisés d'ouvrir l'écran de chat Dona.</span>
+                          <span className="text-xs font-semibold text-slate-900 block">Assistant Dona Actif</span>
                         </div>
                       </div>
                       <input
@@ -1090,12 +1090,11 @@ export const AdminPanel: React.FC = () => {
                       />
                     </label>
 
-                    <label className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition">
+                    <label className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
                       <div className="flex items-center space-x-2">
-                        <Globe className="w-4 h-4 text-amber-600 shrink-0" />
+                        <Globe className="w-4 h-4 text-slate-500 shrink-0" />
                         <div>
-                          <span className="text-xs font-bold text-slate-900 block">Recherche Google en Direct</span>
-                          <span className="text-[10px] text-slate-500 block">Dona peut chercher des informations récentes sur le web en temps réel.</span>
+                          <span className="text-xs font-semibold text-slate-900 block">Recherche Google en Direct</span>
                         </div>
                       </div>
                       <input
@@ -1106,12 +1105,11 @@ export const AdminPanel: React.FC = () => {
                       />
                     </label>
 
-                    <label className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition">
+                    <label className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
                       <div className="flex items-center space-x-2">
-                        <Mic className="w-4 h-4 text-amber-600 shrink-0" />
+                        <Mic className="w-4 h-4 text-slate-500 shrink-0" />
                         <div>
-                          <span className="text-xs font-bold text-slate-900 block">Transcription Vocale & Audio</span>
-                          <span className="text-[10px] text-slate-500 block">Permet l'enregistrement micro et la lecture audio des réponses.</span>
+                          <span className="text-xs font-semibold text-slate-900 block">Transcription Vocale & Audio</span>
                         </div>
                       </div>
                       <input
@@ -1126,77 +1124,65 @@ export const AdminPanel: React.FC = () => {
                 </div>
 
                 {/* Block 2: Custom Bar Guidelines & Prompt */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center space-x-2 pb-1 border-b border-slate-100">
-                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                    <h4 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Directives & Comportement de Dona</h4>
+                    <Sparkles className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Directives de l'Établissement</h4>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Consignes Personnalisées de la Direction
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Consignes Spécifiques
                     </label>
                     <textarea
-                      rows={5}
+                      rows={4}
                       value={donaCustomInstructions}
                       onChange={(e) => setDonaCustomInstructions(e.target.value)}
-                      placeholder="Ex: Encourager les serveurs à proposer les cocktails signature du bar, rappeler la formule Happy Hour de 18h à 20h, privilégier le créole ou le français poli..."
-                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-2 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
+                      placeholder="Ex: Mettre en avant les cocktails signature, formule du midi..."
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-2 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none transition"
                     />
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Ces directives sont automatiquement injectées dans la mémoire système de Dona à chaque échange.
-                    </p>
                   </div>
 
                   {/* Access Policy Selector */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Politique Globale d'Accès à Dona
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Politique d'Accès à Dona
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                       <button
                         type="button"
                         onClick={() => setDonaAccessMode('all')}
-                        className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                        className={`p-2 rounded-lg border text-left transition cursor-pointer ${
                           donaAccessMode === 'all'
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
                             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-xs font-extrabold block">Tout le monde</span>
-                        <span className={`text-[10px] block ${donaAccessMode === 'all' ? 'text-amber-400' : 'text-slate-400'}`}>
-                          Toute l'équipe
-                        </span>
+                        <span className="text-xs block">Tout le monde</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setDonaAccessMode('admins_only')}
-                        className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                        className={`p-2 rounded-lg border text-left transition cursor-pointer ${
                           donaAccessMode === 'admins_only'
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
                             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-xs font-extrabold block">Direction Seule</span>
-                        <span className={`text-[10px] block ${donaAccessMode === 'admins_only' ? 'text-amber-400' : 'text-slate-400'}`}>
-                          Admins uniquement
-                        </span>
+                        <span className="text-xs block">Direction Seule</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setDonaAccessMode('custom')}
-                        className={`p-2.5 rounded-xl border text-left transition cursor-pointer ${
+                        className={`p-2 rounded-lg border text-left transition cursor-pointer ${
                           donaAccessMode === 'custom'
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
                             : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="text-xs font-extrabold block">Personnalisé</span>
-                        <span className={`text-[10px] block ${donaAccessMode === 'custom' ? 'text-amber-400' : 'text-slate-400'}`}>
-                          Par employé ci-dessous
-                        </span>
+                        <span className="text-xs block">Personnalisé</span>
                       </button>
                     </div>
                   </div>
@@ -1208,40 +1194,33 @@ export const AdminPanel: React.FC = () => {
             </div>
 
             {/* Save AI Settings Bar */}
-            <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200">
               <div className="text-xs text-slate-500">
-                {aiSettingsSaved ? (
-                  <span className="text-emerald-700 font-bold flex items-center gap-1.5 animate-fadeIn">
-                    <CheckCheck className="w-4 h-4" /> Paramètres IA & Clé API enregistrés avec succès !
+                {aiSettingsSaved && (
+                  <span className="text-slate-800 font-medium flex items-center gap-1.5 animate-fadeIn">
+                    <CheckCheck className="w-4 h-4 text-slate-700" /> Paramètres enregistrés
                   </span>
-                ) : (
-                  <span>Les modifications s'appliquent immédiatement pour toutes les sessions de Dona.</span>
                 )}
               </div>
 
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center space-x-2 cursor-pointer active:scale-95"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition flex items-center space-x-2 cursor-pointer"
               >
-                <Save className="w-4 h-4 text-amber-400" />
-                <span>Enregistrer les Paramètres IA</span>
+                <Save className="w-3.5 h-3.5" />
+                <span>Enregistrer</span>
               </button>
             </div>
 
           </form>
 
           {/* Section 2: Quick Permissions Table for AI Dona */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-            <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2">
-                  <Users className="w-4 h-4 text-amber-600" />
-                  <span>Gestion des Accès à Dona par Membre ({approvedUsers.length})</span>
-                </h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Contrôlez qui dans votre personnel peut consulter ou converser avec Dona.
-                </p>
-              </div>
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="p-3.5 bg-slate-50 border-b border-slate-200">
+              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-2">
+                <Users className="w-3.5 h-3.5 text-slate-500" />
+                <span>Accès à Dona par Membre ({approvedUsers.length})</span>
+              </h3>
             </div>
 
             <div className="divide-y divide-slate-100">
@@ -1250,29 +1229,23 @@ export const AdminPanel: React.FC = () => {
                 const hasChatAccess = user.role === 'admin' || user.permissions?.canAccessChat !== false;
 
                 return (
-                  <div key={user.uid} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 transition">
+                  <div key={user.uid} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/60 transition">
                     <div className="flex items-center space-x-3 min-w-0">
                       {user.photoURL ? (
                         <img
                           src={user.photoURL}
                           alt={user.displayName}
-                          className="w-10 h-10 rounded-full border border-slate-200 object-cover shrink-0"
+                          className="w-9 h-9 rounded-full border border-slate-200 object-cover shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-900 text-amber-400 font-black text-sm flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-slate-900 text-amber-400 font-bold text-xs flex items-center justify-center shrink-0">
                           {user.displayName.charAt(0)}
                         </div>
                       )}
                       <div className="truncate">
                         <div className="flex items-center space-x-2">
                           <span className="font-bold text-slate-900 text-xs truncate">{user.displayName}</span>
-                          <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${
-                            isSuper 
-                              ? 'bg-amber-100 text-amber-900' 
-                              : user.role === 'admin' 
-                              ? 'bg-slate-900 text-amber-400' 
-                              : 'bg-slate-100 text-slate-600'
-                          }`}>
+                          <span className="text-[9px] font-medium uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
                             {isSuper ? 'PROPRIÉTAIRE' : user.role === 'admin' ? 'ADMIN' : 'EMPLOYÉ'}
                           </span>
                         </div>
@@ -1285,22 +1258,22 @@ export const AdminPanel: React.FC = () => {
                         type="button"
                         disabled={isSuper}
                         onClick={() => handleToggleUserAiAccess(user)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 cursor-pointer border ${
                           hasChatAccess
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
-                            : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
+                            ? 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200'
+                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
                         } ${isSuper ? 'opacity-60 cursor-not-allowed' : ''}`}
                         title={hasChatAccess ? 'Désactiver l\'accès Dona' : 'Activer l\'accès Dona'}
                       >
                         {hasChatAccess ? (
                           <>
-                            <Unlock className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Accès Dona Autorisé</span>
+                            <Unlock className="w-3.5 h-3.5 text-slate-600" />
+                            <span>Autorisé</span>
                           </>
                         ) : (
                           <>
-                            <Lock className="w-3.5 h-3.5 text-red-600" />
-                            <span>Accès Bloqué</span>
+                            <Lock className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Bloqué</span>
                           </>
                         )}
                       </button>
@@ -1321,8 +1294,8 @@ export const AdminPanel: React.FC = () => {
 
       {/* ================= TAB 4: AUDIT LOGS ================= */}
       {activeTab === 'audit' && (
-        <div className="space-y-6">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-2">
               <div className="relative flex-1 sm:w-64">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
@@ -1331,14 +1304,14 @@ export const AdminPanel: React.FC = () => {
                   placeholder="Rechercher dans les logs..."
                   value={auditSearch}
                   onChange={(e) => setAuditSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none"
+                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <select
                 value={auditFilter}
                 onChange={(e) => setAuditFilter(e.target.value)}
-                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700"
+                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700"
               >
                 <option value="all">Toutes actions</option>
                 <option value="user_approved">Approbations</option>
@@ -1352,14 +1325,14 @@ export const AdminPanel: React.FC = () => {
 
             <button
               onClick={() => exportToCSV('audit')}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center space-x-1.5 self-start sm:self-auto cursor-pointer"
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition flex items-center space-x-1.5 self-start sm:self-auto cursor-pointer border border-slate-200"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-slate-500" />
               <span>Exporter CSV</span>
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
             <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
               {filteredAuditLogs.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-xs">
@@ -1372,7 +1345,7 @@ export const AdminPanel: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <span className="font-bold text-slate-900">{log.userName}</span>
                         <span className="text-[10px] text-slate-400">({log.userEmail})</span>
-                        <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] font-bold rounded">
+                        <span className="px-1.5 py-0.2 bg-slate-100 text-slate-600 text-[10px] font-medium rounded border border-slate-200">
                           {log.action}
                         </span>
                       </div>
@@ -1391,56 +1364,56 @@ export const AdminPanel: React.FC = () => {
 
       {/* ================= TAB 6: DATA EXPORTS & PERIOD CLOSE ================= */}
       {activeTab === 'data' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Export Center */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
               <div className="flex items-center space-x-2 pb-2 border-b border-slate-100">
-                <FileDown className="w-4 h-4 text-amber-600 shrink-0" />
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Sauvegarde & Exports CSV</h3>
+                <FileDown className="w-4 h-4 text-slate-600 shrink-0" />
+                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Sauvegarde & Exports CSV</h3>
               </div>
               <p className="text-xs text-slate-500">
-                Téléchargez les registres complets de votre établissement au format CSV pour Excel ou logiciel comptable.
+                Téléchargez les registres complets au format CSV pour tableur ou comptabilité.
               </p>
 
               <div className="space-y-2">
                 <button
                   onClick={() => exportToCSV('sales')}
-                  className="w-full p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left flex items-center justify-between text-xs font-bold text-slate-800 transition cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left flex items-center justify-between text-xs font-semibold text-slate-800 transition cursor-pointer"
                 >
                   <div className="flex items-center space-x-2.5">
-                    <Receipt className="w-4 h-4 text-amber-600" />
+                    <Receipt className="w-4 h-4 text-slate-500" />
                     <span>Journal des Ventes ({sales.length} transactions)</span>
                   </div>
-                  <Download className="w-4 h-4 text-slate-400" />
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
                 </button>
 
                 <button
                   onClick={() => exportToCSV('expenses')}
-                  className="w-full p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left flex items-center justify-between text-xs font-bold text-slate-800 transition cursor-pointer"
+                  className="w-full p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left flex items-center justify-between text-xs font-semibold text-slate-800 transition cursor-pointer"
                 >
                   <div className="flex items-center space-x-2.5">
-                    <DollarSign className="w-4 h-4 text-amber-600" />
+                    <DollarSign className="w-4 h-4 text-slate-500" />
                     <span>Registre des Dépenses ({expenses.length} entrées)</span>
                   </div>
-                  <Download className="w-4 h-4 text-slate-400" />
+                  <Download className="w-3.5 h-3.5 text-slate-400" />
                 </button>
               </div>
             </div>
 
             {/* Official Period Closure */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3">
               <div className="flex items-center space-x-2 pb-2 border-b border-slate-100">
-                <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Clôture Officielle de Période</h3>
+                <Calendar className="w-4 h-4 text-slate-600 shrink-0" />
+                <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Clôture Officielle de Période</h3>
               </div>
               <p className="text-xs text-slate-500">
                 Verrouille les ventes et dépenses antérieures pour sceller le grand livre comptable.
               </p>
 
-              <div className="p-3 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900">
-                Dernière clôture enregistrée : <strong>{settings.lastPeriodClose ? new Date(settings.lastPeriodClose).toLocaleString('fr-FR') : 'Aucune'}</strong>
+              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700">
+                Dernière clôture : <strong>{settings.lastPeriodClose ? new Date(settings.lastPeriodClose).toLocaleString('fr-FR') : 'Aucune'}</strong>
               </div>
 
               <button
@@ -1450,7 +1423,7 @@ export const AdminPanel: React.FC = () => {
                     alert("Période clôturée avec succès.");
                   }
                 }}
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
               >
                 Clôturer la Période Aujourd'hui
               </button>
@@ -1458,22 +1431,22 @@ export const AdminPanel: React.FC = () => {
 
           </div>
 
-          {/* Dangerous Zone */}
-          <div className="bg-red-50/50 p-5 rounded-2xl border border-red-200 shadow-2xs space-y-3">
+          {/* Dangerous Zone (separated & with clear confirmation) */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-3 mt-6">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-              <h3 className="font-extrabold text-red-900 text-xs uppercase tracking-wider">Zone de Réinitialisation Système</h3>
+              <AlertCircle className="w-4 h-4 text-slate-600 shrink-0" />
+              <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Zone de Maintenance & Réinitialisation</h3>
             </div>
-            <p className="text-xs text-red-700">
-              Permet de remettre à zéro les transactions ou de restaurer les paramètres d'usine du bar.
+            <p className="text-xs text-slate-500">
+              Outils d'administration pour réinitialiser les données de test ou restaurer les paramètres.
             </p>
 
             <button
               type="button"
               onClick={() => setIsResetModalOpen(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-700 border border-slate-200 hover:border-red-200 font-semibold text-xs rounded-lg transition cursor-pointer"
             >
-              Ouvrir la console de réinitialisation
+              Console de réinitialisation
             </button>
           </div>
         </div>
@@ -1482,11 +1455,11 @@ export const AdminPanel: React.FC = () => {
       {/* ================= EDIT USER PERMISSIONS MODAL ================= */}
       {editingUser && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 border border-slate-200 shadow-2xl space-y-4 animate-in zoom-in-95">
+          <div className="bg-white rounded-xl max-w-md w-full p-5 border border-slate-200 space-y-4 animate-in zoom-in-95">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center space-x-2">
-                <UserCog className="w-4 h-4 text-amber-600" />
-                <h3 className="font-extrabold text-slate-900 text-sm">Gestion des Droits Utilisateur</h3>
+                <UserCog className="w-4 h-4 text-slate-600" />
+                <h3 className="font-bold text-slate-900 text-sm">Gestion des Droits</h3>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
@@ -1498,32 +1471,72 @@ export const AdminPanel: React.FC = () => {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nom Complet</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nom Complet</label>
                 <input
                   type="text"
                   value={editDisplayName}
                   onChange={(e) => setEditDisplayName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-2 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-medium focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Rôle Principal</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Rôle Système</label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value as UserRole)}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-2 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-semibold focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none"
                 >
-                  <option value="employee">Employé de service</option>
-                  <option value="admin">Administrateur / Gérant</option>
+                  <option value="employee">
+                    {settings.customRoleLabels?.employee ? `${settings.customRoleLabels.employee} (Employé)` : 'Employé de service'}
+                  </option>
+                  <option value="admin">
+                    {settings.customRoleLabels?.admin ? `${settings.customRoleLabels.admin} (Admin)` : 'Administrateur / Gérant'}
+                  </option>
                 </select>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700">Permissions Granulaires</label>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Intitulé du Poste (Optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={editCustomRoleTitle}
+                  onChange={(e) => setEditCustomRoleTitle(e.target.value)}
+                  placeholder="Ex: Caissière Principale, Serveur"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-medium focus:ring-1 focus:ring-amber-500 focus:bg-white focus:outline-none"
+                />
+              </div>
+
+              {/* Fast Cashier Assignment Button */}
+              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-slate-800">Poste de Caisse</p>
+                  <p className="text-[10px] text-slate-500 truncate">
+                    {settings.cashierUserId === editingUser.uid || settings.cashierName === (editDisplayName || editingUser.displayName)
+                      ? 'Désigné(e) comme Caissier(e)'
+                      : 'Non assigné(e)'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cName = editDisplayName.trim() || editingUser.displayName;
+                    updateSettings({ cashierName: cName, cashierUserId: editingUser.uid });
+                    alert(`${cName} a été assigné(e) comme Caissier(e).`);
+                  }}
+                  className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] rounded-md transition shrink-0 cursor-pointer"
+                >
+                  Assigner Caisse
+                </button>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                <label className="block text-xs font-semibold text-slate-700">Permissions</label>
                 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Accès Caisse & Encaissement (POS)</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Accès Caisse & POS</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canAccessPOS}
@@ -1532,8 +1545,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Assistant IA Dona</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Assistant IA Dona</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canAccessChat !== false}
@@ -1542,8 +1555,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Consultation du Stock</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Consultation du Stock</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canAccessStock}
@@ -1552,8 +1565,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Gestion / Approvisionnement Stock</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Approvisionnement Stock</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canManageStock}
@@ -1562,8 +1575,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Visibilité des Coûts & Marges</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Visibilité des Coûts & Marges</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canViewCostPrices}
@@ -1572,8 +1585,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Finances, Bilan & Z-Report</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Finances, Bilan & Z-Report</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canAccessReports}
@@ -1582,8 +1595,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Suivi des Dépenses</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Suivi des Dépenses</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canAccessExpenses}
@@ -1592,8 +1605,8 @@ export const AdminPanel: React.FC = () => {
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-2 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition">
-                  <span className="text-xs font-semibold text-slate-800">Accès Paramètres & Direction</span>
+                <label className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  <span className="text-xs text-slate-800">Accès Paramètres & Direction</span>
                   <input
                     type="checkbox"
                     checked={editPerms.canAccessSettings}
@@ -1608,14 +1621,14 @@ export const AdminPanel: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setEditingUser(null)}
-                className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-bold transition cursor-pointer"
+                className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded-lg text-xs font-semibold transition cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="button"
                 onClick={handleSavePermissions}
-                className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+                className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg transition cursor-pointer"
               >
                 Enregistrer
               </button>

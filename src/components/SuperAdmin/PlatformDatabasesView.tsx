@@ -78,7 +78,7 @@ export const PlatformDatabasesView: React.FC = () => {
             Bases de Données & Quotas par Entreprise
           </h3>
           <p className="text-xs text-slate-500">
-            Supervision de l'infrastructure Google Firestore, quotas de requêtes et empreinte de stockage
+            Supervision de l'infrastructure de stockage cloud, quotas de requêtes et empreinte de données
           </p>
         </div>
 
@@ -106,7 +106,7 @@ export const PlatformDatabasesView: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
-            <span>État Serveur Firestore</span>
+            <span>État Serveur Cloud</span>
             <Activity className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="flex items-center gap-2">
@@ -122,7 +122,7 @@ export const PlatformDatabasesView: React.FC = () => {
 
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
-            <span>Total Documents Firestore</span>
+            <span>Total Enregistrements Cloud</span>
             <Layers className="w-4 h-4 text-blue-500" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -130,7 +130,7 @@ export const PlatformDatabasesView: React.FC = () => {
             <span className="text-xs font-bold text-slate-500">enregistrements</span>
           </div>
           <p className="text-[10px] text-slate-400 mt-0.5">
-            Répartis sur 8 collections maîtresses
+            Répartis sur 8 tables principales
           </p>
         </div>
 
