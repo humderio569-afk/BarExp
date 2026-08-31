@@ -14,8 +14,6 @@ import {
   Building2,
   Copy,
   Check,
-  Sparkles,
-  LogOut,
   Briefcase,
   Crown,
   Clock,
@@ -270,23 +268,6 @@ export const Navbar: React.FC = () => {
                   {totalAlertsCount}
                 </span>
               )}
-            </button>
-
-            {/* Separator before sensitive logout action */}
-            <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-
-            {/* Direct Logout Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('Souhaitez-vous vous déconnecter de votre session ?')) {
-                  logout();
-                }
-              }}
-              className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition shrink-0 cursor-pointer flex items-center justify-center ml-1"
-              title="Se déconnecter de la session"
-            >
-              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>

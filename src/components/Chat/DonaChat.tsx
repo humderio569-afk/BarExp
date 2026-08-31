@@ -29,7 +29,7 @@ import {
   Package, 
   Wine, 
   Lightbulb, 
-  Sparkles,
+  Bot,
   PanelLeftClose,
   PanelLeft,
   Search
@@ -686,7 +686,7 @@ export const DonaChat: React.FC = () => {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
         <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center mx-auto shadow-2xs">
-            <Sparkles className="w-7 h-7" />
+            <Bot className="w-7 h-7" />
           </div>
           <div>
             <h2 className="text-base font-extrabold text-slate-900">

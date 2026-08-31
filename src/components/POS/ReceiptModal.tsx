@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Sale } from '../../types';
 import { useBar } from '../../context/BarContext';
-import { Printer, CheckCircle, Download, FileText, Sparkles } from 'lucide-react';
+import { Printer, CheckCircle, Download, FileText } from 'lucide-react';
 import { downloadReceiptImage, downloadReceiptHtml, printReceiptIframe } from '../../utils/receiptGenerator';
 
 interface ReceiptModalProps {

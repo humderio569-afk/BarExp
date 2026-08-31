@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Product } from '../../types';
-import { X, Sparkles, Check, Plus, Minus, Calculator, Boxes } from 'lucide-react';
+import { X, Layers, Check, Plus, Minus, Calculator, Boxes } from 'lucide-react';
 
 interface FlavorSelectionModalProps {
   product: Product;
@@ -109,7 +109,7 @@ export const FlavorSelectionModal: React.FC<FlavorSelectionModalProps> = ({
           {/* Variety selection section */}
           <div>
             <span className="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Layers className="w-3.5 h-3.5 text-amber-500" />
               <span>1. Choix du / de la {varietyLabel} :</span>
             </span>
 

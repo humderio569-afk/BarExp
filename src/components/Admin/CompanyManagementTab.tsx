@@ -218,7 +218,7 @@ export const CompanyManagementTab: React.FC = () => {
 
           <button
             onClick={handleOpenCreateModal}
-            className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition cursor-pointer"
+            className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition cursor-pointer shadow-2xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Ajouter un Établissement</span>
@@ -302,7 +302,7 @@ export const CompanyManagementTab: React.FC = () => {
               onClick={() => setStatusFilter('all')}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
                 statusFilter === 'all'
-                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                  ? 'bg-slate-900 text-white font-bold border-slate-900 shadow-2xs'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -312,7 +312,7 @@ export const CompanyManagementTab: React.FC = () => {
               onClick={() => setStatusFilter('active')}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
                 statusFilter === 'active'
-                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                  ? 'bg-slate-900 text-white font-bold border-slate-900 shadow-2xs'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -322,7 +322,7 @@ export const CompanyManagementTab: React.FC = () => {
               onClick={() => setStatusFilter('suspended')}
               className={`px-2.5 py-1 rounded-lg text-xs font-medium transition cursor-pointer border ${
                 statusFilter === 'suspended'
-                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                  ? 'bg-slate-900 text-white font-bold border-slate-900 shadow-2xs'
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
@@ -427,7 +427,7 @@ export const CompanyManagementTab: React.FC = () => {
                         className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer border ${
                           isCurrentActive
                             ? 'bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200'
-                            : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-500 font-bold'
+                            : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900 font-bold shadow-2xs'
                         }`}
                       >
                         <ExternalLink className="w-3 h-3" />
@@ -647,7 +647,7 @@ export const CompanyManagementTab: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition disabled:opacity-50 cursor-pointer shadow-2xs"
                 >
                   {isSubmitting
                     ? "Enregistrement..."

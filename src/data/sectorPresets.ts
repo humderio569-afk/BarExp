@@ -36,7 +36,7 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
     ],
     suggestedCategories: [
       { id: 'cat_impression_papier', name: 'Impressions & Copies', color: 'bg-blue-600', bgLight: 'bg-blue-50 text-blue-700 border-blue-200', icon: 'FileText' },
-      { id: 'cat_serigraphie_objets', name: 'Objets Personnalisés', color: 'bg-purple-600', bgLight: 'bg-purple-50 text-purple-700 border-purple-200', icon: 'Sparkles' },
+      { id: 'cat_serigraphie_objets', name: 'Objets Personnalisés', color: 'bg-purple-600', bgLight: 'bg-purple-50 text-purple-700 border-purple-200', icon: 'Gift' },
       { id: 'cat_redaction_saisie', name: 'Rédaction & Bureautique', color: 'bg-amber-600', bgLight: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'FileEdit' },
       { id: 'cat_infographie_design', name: 'Infographie & Design', color: 'bg-pink-600', bgLight: 'bg-pink-50 text-pink-700 border-pink-200', icon: 'Palette' },
       { id: 'cat_finition_reliure', name: 'Reliure & Finition', color: 'bg-emerald-600', bgLight: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'Layers' },
@@ -538,7 +538,7 @@ export const SECTOR_PRESETS: Record<BusinessSector, SectorPresetConfig> = {
     suggestedCategories: [
       { id: 'cat_epicerie', name: 'Épicerie & Alimentation', color: 'bg-emerald-600', bgLight: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'ShoppingBag' },
       { id: 'cat_boissons_frais', name: 'Boissons Fraîches', color: 'bg-blue-600', bgLight: 'bg-blue-50 text-blue-700 border-blue-200', icon: 'CupSoda' },
-      { id: 'cat_hygiene_maison', name: 'Hygiène & Entretien', color: 'bg-cyan-600', bgLight: 'bg-cyan-50 text-cyan-700 border-cyan-200', icon: 'Sparkles' },
+      { id: 'cat_hygiene_maison', name: 'Hygiène & Entretien', color: 'bg-cyan-600', bgLight: 'bg-cyan-50 text-cyan-700 border-cyan-200', icon: 'ShieldCheck' },
       { id: 'cat_quincaillerie', name: 'Quincaillerie & Électricité', color: 'bg-amber-700', bgLight: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'Wrench' },
     ],
     starterProducts: [

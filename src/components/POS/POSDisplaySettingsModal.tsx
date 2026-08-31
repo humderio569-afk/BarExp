@@ -6,7 +6,6 @@ import {
   Grid3X3, 
   Check, 
   X, 
-  Sparkles, 
   Layers, 
   Columns, 
   Maximize2,

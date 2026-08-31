@@ -10,7 +10,7 @@ import {
   Check, 
   AlertCircle, 
   Boxes, 
-  Sparkles, 
+  Zap, 
   RotateCcw,
   ArrowRight,
   Layers,
@@ -193,7 +193,7 @@ export const UnitManagerModal: React.FC<UnitManagerModalProps> = ({ onClose, onS
           <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 p-3.5 rounded-2xl border border-amber-200/80 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-amber-950 flex items-center space-x-1.5">
-                <Sparkles className="w-4 h-4 text-amber-600" />
+                <Zap className="w-4 h-4 text-amber-600" />
                 <span>Modèles Rapides par Type de Commerce :</span>
               </span>
               <span className="text-[10px] font-bold text-amber-800">1-clic pour charger</span>

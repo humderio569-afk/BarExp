@@ -16,7 +16,7 @@ import {
   CupSoda, 
   Package, 
   Coffee, 
-  Sparkles, 
+  Crown, 
   Apple, 
   Sandwich, 
   IceCream, 
@@ -50,7 +50,7 @@ const AVAILABLE_ICONS = [
   { name: 'Milk', label: 'Laiterie', icon: Milk },
   { name: 'Popcorn', label: 'Aapéritif', icon: Popcorn },
   { name: 'Grape', label: 'Vignoble', icon: Grape },
-  { name: 'Sparkles', label: 'Spécial / VIP', icon: Sparkles },
+  { name: 'Crown', label: 'Spécial / VIP / Signature', icon: Crown },
   { name: 'Tag', label: 'Divers / Etiquette', icon: Tag },
   { name: 'Package', label: 'Colis / Stock', icon: Package },
 ];

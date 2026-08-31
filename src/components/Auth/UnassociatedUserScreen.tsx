@@ -4,7 +4,6 @@ import { BusinessSector } from '../../types';
 import {
   Building2,
   UserCheck,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   LogOut,
@@ -152,8 +151,8 @@ export const UnassociatedUserScreen: React.FC = () => {
             <div className="space-y-4">
               <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-2xl">
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-500 text-slate-950 rounded-xl font-bold shrink-0">
-                    <Sparkles className="w-5 h-5" />
+                  <div className="p-2 bg-slate-900 text-amber-400 rounded-xl font-bold shrink-0">
+                    <Store className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-slate-900">Aucun établissement associé à ce compte</h3>

@@ -18,7 +18,6 @@ import {
   ShoppingCart,
   Search,
   Lock,
-  Sparkles,
   Info,
   HelpCircle,
   Package,

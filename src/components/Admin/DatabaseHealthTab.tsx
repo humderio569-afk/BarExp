@@ -21,7 +21,6 @@ import {
   Wifi, 
   WifiOff, 
   Server,
-  Sparkles,
   ExternalLink,
   Bot,
   Users,

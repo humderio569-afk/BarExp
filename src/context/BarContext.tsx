@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Product, CartItem, Sale, Expense, BarTab, BarSettings, ActiveTab, Category, CategoryItem, StockLog, PaymentMethod, OfflineSyncQueueItem, AppUser, UserRole, UserStatus, UserPermissions, SUPER_ADMIN_EMAIL, AuditLog, AuditAction, Company, PreRegisteredEmployee, BusinessSector, ManualPaymentMethodConfig, ManualPaymentProof, CompanySubscription } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_EXPENSES, INITIAL_SETTINGS, INITIAL_SALES, CATEGORIES_CONFIG, INITIAL_COMPANIES, INITIAL_PRE_REGISTRATIONS, INITIAL_MANUAL_PAYMENT_PROOFS } from '../data/initialData';
 import { SECTOR_PRESETS } from '../data/sectorPresets';
@@ -209,7 +209,7 @@ const DEFAULT_SUPER_ADMIN_USER: AppUser = {
 
 export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Load initial state from LocalStorage or Fallbacks safely
-  const [products, setProducts] = useState<Product[]>(() => {
+  const [rawProducts, setRawProducts] = useState<Product[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.PRODUCTS);
       return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
@@ -218,7 +218,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [categories, setCategories] = useState<CategoryItem[]>(() => {
+  const [rawCategories, setRawCategories] = useState<CategoryItem[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.CATEGORIES);
       if (saved) return JSON.parse(saved);
@@ -232,7 +232,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   });
 
-  const [sales, setSales] = useState<Sale[]>(() => {
+  const [rawSales, setRawSales] = useState<Sale[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.SALES);
       return saved ? JSON.parse(saved) : INITIAL_SALES;
@@ -241,7 +241,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [expenses, setExpenses] = useState<Expense[]>(() => {
+  const [rawExpenses, setRawExpenses] = useState<Expense[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.EXPENSES);
       return saved ? JSON.parse(saved) : INITIAL_EXPENSES;
@@ -250,16 +250,18 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
-  const [tabs, setTabs] = useState<BarTab[]>(() => {
+  const [rawTabs, setRawTabs] = useState<BarTab[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.TABS);
       return saved ? JSON.parse(saved) : [
         {
           id: 'tab-table1',
           tableName: 'Table 1',
+          companyId: 'comp_lmd88412',
+          companyCode: 'LMD88412',
           items: [
             { product: INITIAL_PRODUCTS[0], quantity: 2, discount: 0 },
-            { product: INITIAL_PRODUCTS[13], quantity: 2, discount: 0 },
+            { product: INITIAL_PRODUCTS[1], quantity: 2, discount: 0 },
           ],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -268,8 +270,10 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         {
           id: 'tab-vip2',
           tableName: 'VIP 2',
+          companyId: 'comp_lmd88412',
+          companyCode: 'LMD88412',
           items: [
-            { product: INITIAL_PRODUCTS[4], quantity: 1, discount: 0 },
+            { product: INITIAL_PRODUCTS[3], quantity: 1, discount: 0 },
           ],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -297,7 +301,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_SETTINGS;
   });
 
-  const [stockLogs, setStockLogs] = useState<StockLog[]>(() => {
+  const [rawStockLogs, setRawStockLogs] = useState<StockLog[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.STOCK_LOGS);
       return saved ? JSON.parse(saved) : [];
@@ -391,8 +395,21 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTable, setActiveTable] = useState<string>('Comptoir');
 
-  // User Auth & Permissions State - Strict auth verification on startup
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  // User Auth & Permissions State - Fast instant offline-first user initialization
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
+    try {
+      const isExplicitlyLoggedOut = safeGetItem('barexpress_explicit_logout') === 'true';
+      if (isExplicitlyLoggedOut) return null;
+      const saved = safeGetItem(STORAGE_KEYS.CACHED_USER);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (parsed.uid || parsed.email)) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return null;
+  });
   const [allUsers, setAllUsers] = useState<AppUser[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.USERS);
@@ -401,7 +418,15 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return [];
     }
   });
-  const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [authLoading, setAuthLoading] = useState<boolean>(() => {
+    try {
+      const isExplicitlyLoggedOut = safeGetItem('barexpress_explicit_logout') === 'true';
+      if (isExplicitlyLoggedOut) return false;
+      const saved = safeGetItem(STORAGE_KEYS.CACHED_USER);
+      if (saved) return false;
+    } catch {}
+    return true;
+  });
 
   // Sync companies & preRegistrations to LocalStorage
   useEffect(() => {
@@ -496,6 +521,71 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const isCompanyAdmin = currentUser?.role === 'admin' || (activeCompany && activeCompany.adminEmail?.toLowerCase() === currentUser?.email?.toLowerCase()) || currentUser?.permissions?.canManageUsers === true;
   const isAdmin = (isImpersonating && isSuperAdmin) || (!isSuperAdmin && isCompanyAdmin) || isCompanyAdmin;
 
+  // Strictly Scoped Company Data Views (Complete Multi-Tenancy Isolation)
+  const products = useMemo<Product[]>(() => {
+    if (!activeCompany) return [];
+    return rawProducts.filter(p => {
+      if (p.companyId) return p.companyId === activeCompany.id || p.companyCode === activeCompany.code;
+      if (p.companyCode) return p.companyCode === activeCompany.code;
+      return activeCompany.code === 'LMD88412' || activeCompany.id === 'comp_lmd88412';
+    });
+  }, [rawProducts, activeCompany]);
+
+  const categories = useMemo<CategoryItem[]>(() => {
+    if (!activeCompany) return rawCategories;
+    const companyCats = rawCategories.filter(c => {
+      if (c.companyId) return c.companyId === activeCompany.id || c.companyCode === activeCompany.code;
+      if (c.companyCode) return c.companyCode === activeCompany.code;
+      return true;
+    });
+    return companyCats.length > 0 ? companyCats : rawCategories;
+  }, [rawCategories, activeCompany]);
+
+  const sales = useMemo<Sale[]>(() => {
+    if (!activeCompany) return [];
+    return rawSales.filter(s => {
+      if (s.companyId) return s.companyId === activeCompany.id || s.companyCode === activeCompany.code;
+      if (s.companyCode) return s.companyCode === activeCompany.code;
+      return activeCompany.code === 'LMD88412' || activeCompany.id === 'comp_lmd88412';
+    });
+  }, [rawSales, activeCompany]);
+
+  const expenses = useMemo<Expense[]>(() => {
+    if (!activeCompany) return [];
+    return rawExpenses.filter(e => {
+      if (e.companyId) return e.companyId === activeCompany.id || e.companyCode === activeCompany.code;
+      if (e.companyCode) return e.companyCode === activeCompany.code;
+      return activeCompany.code === 'LMD88412' || activeCompany.id === 'comp_lmd88412';
+    });
+  }, [rawExpenses, activeCompany]);
+
+  const tabs = useMemo<BarTab[]>(() => {
+    if (!activeCompany) return [];
+    return rawTabs.filter(t => {
+      if (t.companyId) return t.companyId === activeCompany.id || t.companyCode === activeCompany.code;
+      if (t.companyCode) return t.companyCode === activeCompany.code;
+      return activeCompany.code === 'LMD88412' || activeCompany.id === 'comp_lmd88412';
+    });
+  }, [rawTabs, activeCompany]);
+
+  const stockLogs = useMemo<StockLog[]>(() => {
+    if (!activeCompany) return [];
+    return rawStockLogs.filter(l => {
+      if (l.companyId) return l.companyId === activeCompany.id || l.companyCode === activeCompany.code;
+      if (l.companyCode) return l.companyCode === activeCompany.code;
+      return activeCompany.code === 'LMD88412' || activeCompany.id === 'comp_lmd88412';
+    });
+  }, [rawStockLogs, activeCompany]);
+
+  // Cart Isolation - clear cart whenever switching between different company spaces
+  const prevActiveCompanyIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeCompany?.id && prevActiveCompanyIdRef.current && prevActiveCompanyIdRef.current !== activeCompany.id) {
+      setCart([]);
+    }
+    prevActiveCompanyIdRef.current = activeCompany?.id || null;
+  }, [activeCompany?.id]);
+
   // Aggregated Platform Stats - Pure real-time consolidation from registered data
   const platformStats: PlatformStats = useMemo(() => {
     const totalCompanies = companies.length;
@@ -503,8 +593,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const suspendedCompanies = companies.filter(c => c.status === 'suspended').length;
     
     // Real consolidated transactions & revenue directly from the sales state
-    const totalPlatformTransactions = sales.length;
-    const totalPlatformRevenue = sales.reduce((acc, s) => acc + (Number(s.total) || 0), 0);
+    const totalPlatformTransactions = rawSales.length;
+    const totalPlatformRevenue = rawSales.reduce((acc, s) => acc + (Number(s.total) || 0), 0);
 
     // Real platform-wide registered staff count
     const totalStaffCount = allUsers.length + preRegistrations.length;
@@ -517,7 +607,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalPlatformTransactions,
       totalStaffCount,
     };
-  }, [companies, sales, allUsers, preRegistrations]);
+  }, [companies, rawSales, allUsers, preRegistrations]);
 
   // Is this user logged in via Google with no company attached yet?
   const isUnassociatedUser = useMemo<boolean>(() => {
@@ -914,7 +1004,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setCurrentUser(fallbackUser);
         }
       } else {
-        // If Firebase Auth has no active user on this device
+        // If Firebase Auth has no active user on this device (e.g. offline or unauthenticated)
         const isExplicitlyLoggedOut = safeGetItem('barexpress_explicit_logout') === 'true';
         if (isExplicitlyLoggedOut) {
           setCurrentUser(null);
@@ -923,13 +1013,12 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return;
         }
 
-        // Check if there is an active local PIN employee session
+        // Check if there is an active local cached session (Google, Email or PIN employee)
         const cached = safeGetItem(STORAGE_KEYS.CACHED_USER);
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            // Only allow PIN session if explicitly verified
-            if (parsed && typeof parsed.uid === 'string' && parsed.uid.startsWith('pin_')) {
+            if (parsed && (parsed.uid || parsed.email)) {
               setCurrentUser(parsed);
               setAuthLoading(false);
               return;
@@ -937,7 +1026,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           } catch {}
         }
         
-        // No valid session on this device -> strictly require login
+        // No valid session on this device -> require login
         safeRemoveItem(STORAGE_KEYS.CACHED_USER);
         setCurrentUser(null);
       }
@@ -2082,32 +2171,32 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Sync to LocalStorage on changes safely
   useEffect(() => {
-    safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
-  }, [products]);
+    safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(rawProducts));
+  }, [rawProducts]);
 
   useEffect(() => {
-    safeSetItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
-  }, [sales]);
+    safeSetItem(STORAGE_KEYS.SALES, JSON.stringify(rawSales));
+  }, [rawSales]);
 
   useEffect(() => {
-    safeSetItem(STORAGE_KEYS.EXPENSES, JSON.stringify(expenses));
-  }, [expenses]);
+    safeSetItem(STORAGE_KEYS.EXPENSES, JSON.stringify(rawExpenses));
+  }, [rawExpenses]);
 
   useEffect(() => {
-    safeSetItem(STORAGE_KEYS.TABS, JSON.stringify(tabs));
-  }, [tabs]);
+    safeSetItem(STORAGE_KEYS.TABS, JSON.stringify(rawTabs));
+  }, [rawTabs]);
 
   useEffect(() => {
     safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
-    safeSetItem(STORAGE_KEYS.STOCK_LOGS, JSON.stringify(stockLogs));
-  }, [stockLogs]);
+    safeSetItem(STORAGE_KEYS.STOCK_LOGS, JSON.stringify(rawStockLogs));
+  }, [rawStockLogs]);
 
   useEffect(() => {
-    safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
-  }, [categories]);
+    safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(rawCategories));
+  }, [rawCategories]);
 
   useEffect(() => {
     safeSetItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(offlineQueue));
@@ -2177,7 +2266,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           (snapshot) => {
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             const loadedProducts = snapshot.docs.map(docSnap => docSnap.data() as Product);
-            setProducts(loadedProducts);
+            setRawProducts(loadedProducts);
           },
           (error) => {
             setIsServerReachable(false);
@@ -2193,7 +2282,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             if (!snapshot.empty) {
               const loadedCategories = snapshot.docs.map(docSnap => docSnap.data() as CategoryItem);
-              setCategories(loadedCategories);
+              setRawCategories(loadedCategories);
             }
           },
           (error) => {
@@ -2210,7 +2299,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             const loadedSales = snapshot.docs.map(docSnap => docSnap.data() as Sale);
             loadedSales.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            setSales(loadedSales);
+            setRawSales(loadedSales);
           },
           (error) => {
             setIsServerReachable(false);
@@ -2226,7 +2315,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             const loadedExpenses = snapshot.docs.map(docSnap => docSnap.data() as Expense);
             loadedExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            setExpenses(loadedExpenses);
+            setRawExpenses(loadedExpenses);
           },
           (error) => {
             setIsServerReachable(false);
@@ -2241,7 +2330,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           (snapshot) => {
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             const loadedTabs = snapshot.docs.map(docSnap => docSnap.data() as BarTab);
-            setTabs(loadedTabs);
+            setRawTabs(loadedTabs);
           },
           (error) => {
             setIsServerReachable(false);
@@ -2257,7 +2346,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             const loadedLogs = snapshot.docs.map(docSnap => docSnap.data() as StockLog);
             loadedLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            setStockLogs(loadedLogs);
+            setRawStockLogs(loadedLogs);
           },
           (error) => {
             setIsServerReachable(false);
@@ -2424,7 +2513,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const syncedIds: string[] = data.syncedIds || pendingSales.map(s => s.id);
 
         // Update sales in state to 'synced'
-        setSales(prevSales =>
+        setRawSales(prevSales =>
           prevSales.map(s => {
             if (syncedIds.includes(s.id)) {
               return { ...s, syncStatus: 'synced', syncedAt: now };
@@ -2614,9 +2703,13 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const timestamp = new Date().toISOString();
     const receiptNum = `REC-${Date.now().toString().slice(-5)}`;
     const isOffline = !isOnline || !isServerReachable;
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
 
     const newSale: Sale = {
       id: `sale-${Date.now()}`,
+      companyId: currentCompId,
+      companyCode: currentCompCode,
       receiptNumber: receiptNum,
       items: [...cart],
       subtotal: cartSubtotal,
@@ -2636,7 +2729,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     // Real-time stock deduction in local cache
-    setProducts(prevProducts => {
+    setRawProducts(prevProducts => {
       const newLogs: StockLog[] = [];
       const updated = prevProducts.map(prod => {
         const cartMatch = cart.find(item => item.product.id === prod.id);
@@ -2646,6 +2739,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             id: `log-${Date.now()}-${prod.id}`,
             productId: prod.id,
             productName: prod.name,
+            companyId: currentCompId,
+            companyCode: currentCompCode,
             type: 'sale',
             quantity: cartMatch.quantity,
             previousStock: prod.stock,
@@ -2666,7 +2761,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       if (newLogs.length > 0) {
-        setStockLogs(prev => [...newLogs, ...prev]);
+        setRawStockLogs(prev => [...newLogs, ...prev]);
       }
 
       return updated;
@@ -2676,7 +2771,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storeInVault('sales_vault', newSale).catch(() => {});
 
     // Record sale in Firestore & local state
-    setSales(prev => [newSale, ...prev]);
+    setRawSales(prev => [newSale, ...prev]);
     setDoc(doc(db, 'sales', newSale.id), cleanForFirestore(newSale)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `sales/${newSale.id}`);
     });
@@ -2752,7 +2847,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Clear cart and reset table tab if open
     clearCart();
-    setTabs(prev => prev.filter(tab => tab.tableName.toLowerCase() !== tableName.toLowerCase()));
+    setRawTabs(prev => prev.filter(tab => tab.tableName.toLowerCase() !== tableName.toLowerCase()));
 
     return newSale;
   };
@@ -2761,7 +2856,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saleToDelete = sales.find(s => s.id === saleId);
     if (!saleToDelete) return;
 
-    setSales(prev => prev.filter(s => s.id !== saleId));
+    setRawSales(prev => prev.filter(s => s.id !== saleId));
     await deleteDoc(doc(db, 'sales', saleId));
     
     await addAuditLog(
@@ -2773,11 +2868,15 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Category CRUD
   const addCategory = (categoryData: Omit<CategoryItem, 'id'>) => {
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
     const newCategory: CategoryItem = {
       ...categoryData,
       id: `cat-${Date.now()}`,
+      companyId: currentCompId,
+      companyCode: currentCompCode,
     };
-    setCategories(prev => [...prev, newCategory]);
+    setRawCategories(prev => [...prev, newCategory]);
     setDoc(doc(db, 'categories', newCategory.id), cleanForFirestore(newCategory)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `categories/${newCategory.id}`);
     });
@@ -2785,7 +2884,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateCategory = (id: string, updates: Partial<CategoryItem>) => {
-    setCategories(prev => {
+    setRawCategories(prev => {
       const updated = prev.map(c => (c.id === id ? { ...c, ...updates } : c));
       const target = updated.find(c => c.id === id);
       if (target) {
@@ -2800,7 +2899,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteCategory = (id: string) => {
     const target = categories.find(c => c.id === id);
     if (!target) return;
-    setCategories(prev => prev.filter(c => c.id !== id));
+    setRawCategories(prev => prev.filter(c => c.id !== id));
     deleteDoc(doc(db, 'categories', id)).catch(err => {
       handleFirestoreError(err, OperationType.DELETE, `categories/${id}`);
     });
@@ -2809,13 +2908,17 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Products CRUD & Fast Single-Time Product Addition ("entrer en une seule fois")
   const addProduct = (productData: Omit<Product, 'id'>): Product => {
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
     const newProduct: Product = {
       ...productData,
       id: `prod-${Date.now()}`,
+      companyId: currentCompId,
+      companyCode: currentCompCode,
       active: true,
     };
 
-    setProducts(prev => [newProduct, ...prev]);
+    setRawProducts(prev => [newProduct, ...prev]);
     setDoc(doc(db, 'products', newProduct.id), cleanForFirestore(newProduct)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `products/${newProduct.id}`);
     });
@@ -2825,6 +2928,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `log-${Date.now()}`,
       productId: newProduct.id,
       productName: newProduct.name,
+      companyId: currentCompId,
+      companyCode: currentCompCode,
       type: 'in',
       quantity: newProduct.stock,
       previousStock: 0,
@@ -2832,7 +2937,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       reason: 'Création produit / Stock initial',
       timestamp: new Date().toISOString(),
     };
-    setStockLogs(prev => [newLog, ...prev]);
+    setRawStockLogs(prev => [newLog, ...prev]);
     setDoc(doc(db, 'stockLogs', newLog.id), cleanForFirestore(newLog)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `stockLogs/${newLog.id}`);
     });
@@ -2846,7 +2951,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
-    const original = products.find(p => p.id === id);
+    const original = rawProducts.find(p => p.id === id);
     if (!original) return;
 
     const updatedProduct: Product = {
@@ -2855,7 +2960,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       active: updates.active !== undefined ? updates.active : (original.active !== undefined ? original.active : true),
     };
 
-    setProducts(prev => prev.map(p => (p.id === id ? updatedProduct : p)));
+    setRawProducts(prev => prev.map(p => (p.id === id ? updatedProduct : p)));
     
     setDoc(doc(db, 'products', id), cleanForFirestore(updatedProduct)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `products/${id}`);
@@ -2880,8 +2985,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteProduct = (id: string) => {
-    const productToDelete = products.find(p => p.id === id);
-    setProducts(prev => prev.filter(p => p.id !== id));
+    const productToDelete = rawProducts.find(p => p.id === id);
+    setRawProducts(prev => prev.filter(p => p.id !== id));
     deleteDoc(doc(db, 'products', id)).catch(err => {
       handleFirestoreError(err, OperationType.DELETE, `products/${id}`);
     });
@@ -2895,7 +3000,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const restockProduct = (productId: string, quantityToAdd: number, reason: string) => {
-    const product = products.find(p => p.id === productId);
+    const product = rawProducts.find(p => p.id === productId);
     if (!product) return;
 
     const previousStock = product.stock;
@@ -2904,10 +3009,14 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateProduct(productId, { stock: newStock });
 
     const recorder = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Gérant';
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
     const newLog: StockLog = {
       id: `log-${Date.now()}`,
       productId,
       productName: product.name,
+      companyId: currentCompId,
+      companyCode: currentCompCode,
       type: quantityToAdd >= 0 ? 'in' : 'spill_loss',
       quantity: Math.abs(quantityToAdd),
       previousStock,
@@ -2917,7 +3026,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       recordedBy: recorder,
     };
 
-    setStockLogs(prev => [newLog, ...prev]);
+    setRawStockLogs(prev => [newLog, ...prev]);
     setDoc(doc(db, 'stockLogs', newLog.id), cleanForFirestore(newLog)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `stockLogs/${newLog.id}`);
     });
@@ -2934,11 +3043,13 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ) => {
     const typeLabel = type === 'journalier' ? 'Journalier' : type === 'hebdomadaire' ? 'Hebdomadaire' : 'Mensuel';
     const timestamp = new Date().toISOString();
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
     let adjustedItems = 0;
     let totalVarianceValue = 0;
     const newLogs: StockLog[] = [];
 
-    setProducts(prevProducts => {
+    setRawProducts(prevProducts => {
       return prevProducts.map(prod => {
         const match = counts.find(c => c.productId === prod.id);
         if (match !== undefined) {
@@ -2954,6 +3065,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               id: `log-${Date.now()}-${prod.id}`,
               productId: prod.id,
               productName: prod.name,
+              companyId: currentCompId,
+              companyCode: currentCompCode,
               type: diff > 0 ? 'in' : 'spill_loss',
               quantity: Math.abs(diff),
               previousStock,
@@ -2979,7 +3092,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     if (newLogs.length > 0) {
-      setStockLogs(prev => [...newLogs, ...prev]);
+      setRawStockLogs(prev => [...newLogs, ...prev]);
     }
 
     return {
@@ -2991,18 +3104,22 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Expenses
   const addExpense = (expenseData: Omit<Expense, 'id'>) => {
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
     const newExpense: Expense = {
       ...expenseData,
       id: `exp-${Date.now()}`,
+      companyId: currentCompId,
+      companyCode: currentCompCode,
     };
-    setExpenses(prev => [newExpense, ...prev]);
+    setRawExpenses(prev => [newExpense, ...prev]);
     setDoc(doc(db, 'expenses', newExpense.id), cleanForFirestore(newExpense)).catch(err => {
       handleFirestoreError(err, OperationType.WRITE, `expenses/${newExpense.id}`);
     });
   };
 
   const deleteExpense = (id: string) => {
-    setExpenses(prev => prev.filter(e => e.id !== id));
+    setRawExpenses(prev => prev.filter(e => e.id !== id));
     deleteDoc(doc(db, 'expenses', id)).catch(err => {
       handleFirestoreError(err, OperationType.DELETE, `expenses/${id}`);
     });
@@ -3013,17 +3130,21 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (cart.length === 0) return;
 
     const now = new Date().toISOString();
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
     let tabToSave: BarTab | null = null;
 
-    setTabs(prev => {
-      const existing = prev.find(t => t.tableName.toLowerCase() === tableName.toLowerCase());
+    setRawTabs(prev => {
+      const existing = prev.find(t => t.tableName.toLowerCase() === tableName.toLowerCase() && (t.companyId === currentCompId || !t.companyId));
       if (existing) {
-        tabToSave = { ...existing, items: [...cart], updatedAt: now };
+        tabToSave = { ...existing, items: [...cart], updatedAt: now, companyId: currentCompId, companyCode: currentCompCode };
         return prev.map(t => (t.id === existing.id ? tabToSave! : t));
       } else {
         tabToSave = {
           id: `tab-${Date.now()}`,
           tableName,
+          companyId: currentCompId,
+          companyCode: currentCompCode,
           items: [...cart],
           createdAt: now,
           updatedAt: now,
@@ -3052,7 +3173,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteTab = (tabId: string) => {
-    setTabs(prev => prev.filter(t => t.id !== tabId));
+    setRawTabs(prev => prev.filter(t => t.id !== tabId));
     deleteDoc(doc(db, 'tabs', tabId)).catch(err => {
       handleFirestoreError(err, OperationType.DELETE, `tabs/${tabId}`);
     });
@@ -3101,6 +3222,8 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const applyBusinessSectorPreset = async (sectorId: BusinessSector, replaceCatalog: boolean = false) => {
     const preset = SECTOR_PRESETS[sectorId];
     if (!preset) return;
+    const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
+    const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
 
     // Update settings
     await updateSettings({
@@ -3116,38 +3239,53 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     if (replaceCatalog) {
-      // 1. Replace categories
-      const catSnap = await getDocs(collection(db, 'categories'));
-      await Promise.all(catSnap.docs.map(d => deleteDoc(d.ref)));
-      for (const cat of preset.suggestedCategories) {
+      // 1. Replace company categories
+      const companyCatIds = rawCategories.filter(c => c.companyId === currentCompId).map(c => c.id);
+      for (const cid of companyCatIds) {
+        await deleteDoc(doc(db, 'categories', cid)).catch(() => {});
+      }
+      const newCategories: CategoryItem[] = preset.suggestedCategories.map((cat, idx) => ({
+        ...cat,
+        id: `cat-${sectorId}-${currentCompCode.toLowerCase()}-${idx}`,
+        companyId: currentCompId,
+        companyCode: currentCompCode,
+      }));
+      for (const cat of newCategories) {
         await setDoc(doc(db, 'categories', cat.id), cleanForFirestore(cat));
       }
-      setCategories(preset.suggestedCategories);
-      safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(preset.suggestedCategories));
+      setRawCategories(prev => [...prev.filter(c => c.companyId !== currentCompId), ...newCategories]);
 
-      // 2. Replace products
-      const prodSnap = await getDocs(collection(db, 'products'));
-      await Promise.all(prodSnap.docs.map(d => deleteDoc(d.ref)));
+      // 2. Replace company products
+      const companyProdIds = rawProducts.filter(p => p.companyId === currentCompId).map(p => p.id);
+      for (const pid of companyProdIds) {
+        await deleteDoc(doc(db, 'products', pid)).catch(() => {});
+      }
       const newProducts: Product[] = preset.starterProducts.map((p, idx) => ({
         ...p,
-        id: `prod-${sectorId}-${Date.now()}-${idx}`,
+        id: `prod-${sectorId}-${currentCompCode.toLowerCase()}-${Date.now()}-${idx}`,
+        companyId: currentCompId,
+        companyCode: currentCompCode,
       }));
       for (const prod of newProducts) {
         await setDoc(doc(db, 'products', prod.id), cleanForFirestore(prod));
       }
-      setProducts(newProducts);
-      safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(newProducts));
+      setRawProducts(prev => [...prev.filter(p => p.companyId !== currentCompId), ...newProducts]);
     } else {
       // Merge categories if not existing
       const existingCatNames = new Set(categories.map(c => c.name.toLowerCase()));
-      const categoriesToAdd = preset.suggestedCategories.filter(c => !existingCatNames.has(c.name.toLowerCase()));
+      const categoriesToAdd = preset.suggestedCategories
+        .filter(c => !existingCatNames.has(c.name.toLowerCase()))
+        .map((cat, idx) => ({
+          ...cat,
+          id: `cat-${sectorId}-${currentCompCode.toLowerCase()}-${Date.now()}-${idx}`,
+          companyId: currentCompId,
+          companyCode: currentCompCode,
+        }));
       if (categoriesToAdd.length > 0) {
-        const mergedCategories = [...categories, ...categoriesToAdd];
         for (const cat of categoriesToAdd) {
           await setDoc(doc(db, 'categories', cat.id), cleanForFirestore(cat));
         }
-        setCategories(mergedCategories);
-        safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(mergedCategories));
+        setRawCategories(prev => [...prev, ...categoriesToAdd]);
       }
 
       // Merge starter products if not existing
@@ -3156,16 +3294,16 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .filter(p => !existingProdNames.has(p.name.toLowerCase()))
         .map((p, idx) => ({
           ...p,
-          id: `prod-${sectorId}-${Date.now()}-${idx}`,
+          id: `prod-${sectorId}-${currentCompCode.toLowerCase()}-${Date.now()}-${idx}`,
+          companyId: currentCompId,
+          companyCode: currentCompCode,
         }));
 
       if (productsToAdd.length > 0) {
-        const mergedProducts = [...products, ...productsToAdd];
         for (const prod of productsToAdd) {
           await setDoc(doc(db, 'products', prod.id), cleanForFirestore(prod));
         }
-        setProducts(mergedProducts);
-        safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(mergedProducts));
+        setRawProducts(prev => [...prev, ...productsToAdd]);
       }
     }
 
@@ -3188,25 +3326,27 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Safe Data Clear & Reset - Leaves user accounts & credentials strictly untouched!
   const clearAndResetData = async (mode: 'transactions_only' | 'complete_reset') => {
     try {
-      // 1. Delete all sales from Firestore
-      const salesSnap = await getDocs(collection(db, 'sales'));
-      await Promise.all(salesSnap.docs.map(d => deleteDoc(d.ref)));
-      setSales([]);
+      const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
 
-      // 2. Delete all expenses from Firestore
-      const expSnap = await getDocs(collection(db, 'expenses'));
-      await Promise.all(expSnap.docs.map(d => deleteDoc(d.ref)));
-      setExpenses([]);
+      // 1. Delete company sales from Firestore
+      const companySales = rawSales.filter(s => s.companyId === currentCompId || (!s.companyId && currentCompId === 'comp_lmd88412'));
+      await Promise.all(companySales.map(s => deleteDoc(doc(db, 'sales', s.id))));
+      setRawSales(prev => prev.filter(s => s.companyId !== currentCompId && (s.companyId || currentCompId !== 'comp_lmd88412')));
 
-      // 3. Delete all tabs from Firestore
-      const tabsSnap = await getDocs(collection(db, 'tabs'));
-      await Promise.all(tabsSnap.docs.map(d => deleteDoc(d.ref)));
-      setTabs([]);
+      // 2. Delete company expenses from Firestore
+      const companyExp = rawExpenses.filter(e => e.companyId === currentCompId || (!e.companyId && currentCompId === 'comp_lmd88412'));
+      await Promise.all(companyExp.map(e => deleteDoc(doc(db, 'expenses', e.id))));
+      setRawExpenses(prev => prev.filter(e => e.companyId !== currentCompId && (e.companyId || currentCompId !== 'comp_lmd88412')));
 
-      // 4. Delete all stock logs from Firestore
-      const logsSnap = await getDocs(collection(db, 'stockLogs'));
-      await Promise.all(logsSnap.docs.map(d => deleteDoc(d.ref)));
-      setStockLogs([]);
+      // 3. Delete company tabs from Firestore
+      const companyTabs = rawTabs.filter(t => t.companyId === currentCompId || (!t.companyId && currentCompId === 'comp_lmd88412'));
+      await Promise.all(companyTabs.map(t => deleteDoc(doc(db, 'tabs', t.id))));
+      setRawTabs(prev => prev.filter(t => t.companyId !== currentCompId && (t.companyId || currentCompId !== 'comp_lmd88412')));
+
+      // 4. Delete company stock logs from Firestore
+      const companyLogs = rawStockLogs.filter(l => l.companyId === currentCompId || (!l.companyId && currentCompId === 'comp_lmd88412'));
+      await Promise.all(companyLogs.map(l => deleteDoc(doc(db, 'stockLogs', l.id))));
+      setRawStockLogs(prev => prev.filter(l => l.companyId !== currentCompId && (l.companyId || currentCompId !== 'comp_lmd88412')));
 
       // 5. Delete audit logs
       const auditSnap = await getDocs(collection(db, 'auditLogs'));
@@ -3214,36 +3354,18 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // 6. Handle Products & Categories for complete reset
       if (mode === 'complete_reset') {
-        const prodSnap = await getDocs(collection(db, 'products'));
-        await Promise.all(prodSnap.docs.map(d => deleteDoc(d.ref)));
-        for (const item of INITIAL_PRODUCTS) {
-          await setDoc(doc(db, 'products', item.id), cleanForFirestore(item));
-        }
-        setProducts(INITIAL_PRODUCTS);
-
-        const catSnap = await getDocs(collection(db, 'categories'));
-        await Promise.all(catSnap.docs.map(d => deleteDoc(d.ref)));
-        for (const cat of CATEGORIES_CONFIG) {
-          await setDoc(doc(db, 'categories', cat.id), cleanForFirestore(cat));
-        }
-        setCategories(CATEGORIES_CONFIG);
+        const companyProd = rawProducts.filter(p => p.companyId === currentCompId || (!p.companyId && currentCompId === 'comp_lmd88412'));
+        await Promise.all(companyProd.map(p => deleteDoc(doc(db, 'products', p.id))));
+        setRawProducts(prev => prev.filter(p => p.companyId !== currentCompId && (p.companyId || currentCompId !== 'comp_lmd88412')));
       }
 
       // 7. Clear cart & local storage cache
       setCart([]);
-      safeRemoveItem(STORAGE_KEYS.SALES);
-      safeRemoveItem(STORAGE_KEYS.EXPENSES);
-      safeRemoveItem(STORAGE_KEYS.TABS);
-      safeRemoveItem(STORAGE_KEYS.STOCK_LOGS);
-      if (mode === 'complete_reset') {
-        safeRemoveItem(STORAGE_KEYS.PRODUCTS);
-        safeRemoveItem(STORAGE_KEYS.CATEGORIES);
-      }
 
       // 8. Log the reset action (user accounts in /users are 100% PRESERVED)
       await addAuditLog(
         'settings_updated',
-        `Purge des données effectuée (${mode === 'complete_reset' ? 'Réinitialisation Totale' : 'Purge Opérationnelle'}). Tous les comptes utilisateurs et accès sont conservés.`
+        `Purge des données effectuée pour l'établissement (${mode === 'complete_reset' ? 'Réinitialisation Totale' : 'Purge Opérationnelle'}). Tous les comptes utilisateurs et accès sont conservés.`
       );
     } catch (err: any) {
       console.error("Erreur lors de la purge des données:", err);
@@ -3279,12 +3401,12 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const parsed = JSON.parse(jsonString);
       if (parsed.products && Array.isArray(parsed.products)) {
-        setProducts(parsed.products);
-        if (parsed.sales) setSales(parsed.sales);
-        if (parsed.expenses) setExpenses(parsed.expenses);
-        if (parsed.tabs) setTabs(parsed.tabs);
+        setRawProducts(parsed.products);
+        if (parsed.sales) setRawSales(parsed.sales);
+        if (parsed.expenses) setRawExpenses(parsed.expenses);
+        if (parsed.tabs) setRawTabs(parsed.tabs);
         if (parsed.settings) setSettings(parsed.settings);
-        if (parsed.stockLogs) setStockLogs(parsed.stockLogs);
+        if (parsed.stockLogs) setRawStockLogs(parsed.stockLogs);
         alert("Sauvegarde importée avec succès !");
         return true;
       }

@@ -4,7 +4,6 @@ import {
   X, 
   Gavel, 
   Tag, 
-  Sparkles, 
   Check, 
   TrendingUp, 
   TrendingDown, 

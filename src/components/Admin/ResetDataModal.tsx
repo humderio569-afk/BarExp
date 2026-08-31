@@ -10,8 +10,7 @@ import {
   RefreshCw, 
   Database,
   Lock,
-  Layers,
-  Sparkles
+  Layers
 } from 'lucide-react';
 
 interface ResetDataModalProps {

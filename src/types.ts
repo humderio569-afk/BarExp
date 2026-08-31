@@ -6,6 +6,8 @@ export interface CategoryItem {
   icon: string;
   color?: string;
   bgLight?: string;
+  companyId?: string;
+  companyCode?: string;
 }
 
 export interface Product {
@@ -26,6 +28,8 @@ export interface Product {
   flavors?: string[]; // Rétrocompatibilité pour les parfums/arômes
   isService?: boolean; // Indique si c'est une prestation/service (ex: saisie de document, impression, lavage)
   active: boolean;
+  companyId?: string;
+  companyCode?: string;
 }
 
 export interface CartItem {
@@ -92,6 +96,8 @@ export interface Expense {
   paymentMethod: PaymentMethod;
   supplier?: string;
   recordedBy: string;
+  companyId?: string;
+  companyCode?: string;
 }
 
 export interface BarTab {
@@ -102,6 +108,8 @@ export interface BarTab {
   updatedAt: string;
   customerName?: string;
   status: 'open' | 'paid';
+  companyId?: string;
+  companyCode?: string;
 }
 
 export interface StockLog {
@@ -115,6 +123,8 @@ export interface StockLog {
   reason: string;
   timestamp: string;
   recordedBy?: string;
+  companyId?: string;
+  companyCode?: string;
 }
 
 export type AuditAction = 

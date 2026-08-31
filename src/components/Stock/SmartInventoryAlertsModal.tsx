@@ -13,7 +13,6 @@ import {
   ArrowRight,
   PackageCheck,
   Clock,
-  Sparkles,
   Zap,
   Info
 } from 'lucide-react';
@@ -301,7 +300,7 @@ export const SmartInventoryAlertsModal: React.FC<SmartInventoryAlertsModalProps>
                   {/* Actions Bar inside alert card */}
                   <div className="pt-2 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
                     <span className="text-[11px] font-bold text-slate-500 flex items-center space-x-1">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <Zap className="w-3.5 h-3.5 text-amber-500" />
                       <span>{alert.suggestedAction}</span>
                     </span>
 

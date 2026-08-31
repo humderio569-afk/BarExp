@@ -7,7 +7,7 @@ import {
   Minus, 
   Package, 
   Calculator, 
-  Sparkles, 
+  Layers, 
   AlertTriangle,
   Boxes,
   ArrowRight,
@@ -214,7 +214,7 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
             <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-2xl space-y-2">
               <div className="flex items-center justify-between text-xs font-black text-amber-950">
                 <span className="flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <Layers className="w-3.5 h-3.5 text-amber-600" />
                   <span>Choisir le parfum :</span>
                 </span>
                 {selectedFlavor && !isCustomMode && (

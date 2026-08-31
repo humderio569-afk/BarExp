@@ -17,7 +17,6 @@ import {
   UtensilsCrossed, 
   ChevronUp, 
   X,
-  Sparkles,
   AlertTriangle,
   AlertCircle,
   Calculator,

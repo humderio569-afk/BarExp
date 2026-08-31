@@ -13,8 +13,7 @@ import {
   VolumeX, 
   ShieldCheck,
   CheckCircle2,
-  Clock,
-  Sparkles
+  Clock
 } from 'lucide-react';
 import { 
   getNotificationPrefs, 

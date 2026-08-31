@@ -32,7 +32,6 @@ import {
   FileText,
   Layers,
   Scale,
-  Sparkles,
   LayoutGrid,
   Grid3X3,
   ListFilter,
@@ -736,7 +735,7 @@ export const StockList: React.FC = () => {
                         {((product.varietyOptions && product.varietyOptions.length > 0) || (product.flavors && product.flavors.length > 0)) && (
                           <div className="mt-1 flex items-center space-x-1">
                             <span className="inline-flex items-center space-x-1 px-1.5 py-0.2 bg-amber-50 text-amber-900 border border-amber-200 rounded text-[9.5px] font-bold">
-                              <Sparkles className="w-2.5 h-2.5 text-amber-600" />
+                              <Layers className="w-2.5 h-2.5 text-amber-600" />
                               <span>
                                 {(product.varietyOptions || product.flavors || []).length} {product.varietyLabel || 'variantes'}
                               </span>

@@ -14,7 +14,6 @@ import {
   Calendar,
   Layers,
   Scale,
-  Sparkles,
   Edit3,
   Plus,
   Printer,
@@ -142,7 +141,7 @@ export const ProductStockDetailModal: React.FC<ProductStockDetailModalProps> = (
                   : 'border-transparent text-slate-500 hover:text-slate-900'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-amber-600" />
+              <Layers className="w-4 h-4 text-amber-600" />
               <span>
                 {product.varietyLabel || 'Variantes'} ({varieties.length})
               </span>
@@ -387,7 +386,7 @@ export const ProductStockDetailModal: React.FC<ProductStockDetailModalProps> = (
             <div className="space-y-4">
               <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl">
                 <h4 className="text-xs font-black uppercase text-amber-950 tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <Layers className="w-4 h-4 text-amber-600" />
                   Options de {product.varietyLabel || 'Variantes'} pour {product.name}
                 </h4>
                 <p className="text-xs text-amber-900 mt-1">

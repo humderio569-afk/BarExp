@@ -4,7 +4,7 @@ import { Category, Product } from '../../types';
 import { PRESET_PRODUCT_IMAGES } from '../../data/presetImages';
 import { DEFAULT_UNITS, VARIETY_LABEL_PRESETS } from '../../data/unitsConfig';
 import { UnitManagerModal } from './UnitManagerModal';
-import { X, Edit3, Image, Upload, Check, Trash2, Calculator, Scale, Sparkles, ScanBarcode } from 'lucide-react';
+import { X, Edit3, Image, Upload, Check, Trash2, Calculator, Scale, Layers, ScanBarcode } from 'lucide-react';
 import { CrateCalculatorModal } from './CrateCalculatorModal';
 import { compressImageFile } from '../../utils/imageCompressor';
 
@@ -349,7 +349,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({ product, onC
           <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <label className="font-bold text-slate-900 flex items-center space-x-1.5">
-                <Sparkles className="w-4 h-4 text-amber-600" />
+                <Layers className="w-4 h-4 text-amber-600" />
                 <span>Déclinaisons & Variétés (Optionnel)</span>
               </label>
               <span className="text-[10px] text-slate-500">

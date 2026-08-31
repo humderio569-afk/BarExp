@@ -4,6 +4,7 @@ import { Category, Product } from '../../types';
 import { renderCategoryIcon } from '../Stock/CategoryManagerModal';
 import { FlavorSelectionModal } from './FlavorSelectionModal';
 import { QuickQuantityModal } from './QuickQuantityModal';
+import { AddProductModal } from '../Stock/AddProductModal';
 import { 
   POSDisplaySettingsModal, 
   POSDisplayPreferences, 
@@ -18,7 +19,6 @@ import {
   Check, 
   AlertCircle, 
   Image as ImageIcon, 
-  Sparkles, 
   X,
   SlidersHorizontal,
   Calculator,
@@ -52,6 +52,7 @@ export const POSGrid: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDisplaySettingsOpen, setIsDisplaySettingsOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Load / Save Display Preferences
@@ -285,12 +286,41 @@ export const POSGrid: React.FC = () => {
       {/* Main Products Container */}
       <div className="flex-1 overflow-y-auto p-2.5 sm:p-4 pb-36 sm:pb-40 md:pb-12">
         {filteredProducts.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-white">
-            <Package className="w-12 h-12 mb-3 text-slate-300 animate-pulse" />
-            <p className="text-base font-semibold text-slate-700">Aucun produit trouvé</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Essayez de modifier votre recherche ou changez de catégorie.
-            </p>
+          <div className="h-72 flex flex-col items-center justify-center text-center p-6 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-white space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+              <Package className="w-7 h-7" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800">
+                {products.length === 0 ? "La caisse est vide (aucun produit)" : "Aucun produit trouvé"}
+              </p>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                {products.length === 0
+                  ? "Votre catalogue est actuellement vide pour cet établissement. Ajoutez votre premier produit pour commencer vos encaissements."
+                  : "Aucun produit ne correspond à vos filtres ou à votre recherche actuelle."}
+              </p>
+            </div>
+            {products.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => setIsAddProductModalOpen(true)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+                <span>Ajouter un Produit</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory('Tous');
+                  setSearchQuery('');
+                }}
+                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-lg transition cursor-pointer"
+              >
+                Réinitialiser les filtres
+              </button>
+            )}
           </div>
         ) : displayPrefs.viewMode === 'cards' ? (
           /* ================= MODE 1: CARTES PHOTOS ================= */
@@ -716,6 +746,13 @@ export const POSGrid: React.FC = () => {
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
       />
+
+      {/* Add Product Modal (accessible directly from empty cash register) */}
+      {isAddProductModalOpen && (
+        <AddProductModal
+          onClose={() => setIsAddProductModalOpen(false)}
+        />
+      )}
 
     </div>
   );

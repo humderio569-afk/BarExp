@@ -217,6 +217,8 @@ export const INITIAL_PRE_REGISTRATIONS: PreRegisteredEmployee[] = [
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'p1',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Prestige Bouteille',
     category: 'Bières',
     price: 250,
@@ -230,6 +232,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p2',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Barbancourt 3 Étoiles',
     category: 'Spiritueux',
     price: 300,
@@ -243,6 +247,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p3',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Toro Energy Drink',
     category: 'Boissons',
     price: 200,
@@ -257,6 +263,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p4',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Cocktail Mojito Signature',
     category: 'Cocktails',
     price: 600,
@@ -271,6 +279,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p5',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Chicha Luxe / Hookah Premium',
     category: 'Divers',
     price: 1500,
@@ -285,6 +295,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p6',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Jus Naturel Pressé',
     category: 'Jus & Sodas',
     price: 350,
@@ -299,6 +311,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p7',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     name: 'Griot de Porc & Banane Pésée',
     category: 'Plats',
     price: 1250,
@@ -315,6 +329,8 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const INITIAL_EXPENSES: Expense[] = [
   {
     id: 'exp1',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     category: 'Approvisionnement',
     description: 'Achat de 5 caisses de Prestige et 2 caisses Guinness',
     amount: 18500,
@@ -325,6 +341,8 @@ export const INITIAL_EXPENSES: Expense[] = [
   },
   {
     id: 'exp2',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     category: 'Glaçons',
     description: 'Achat 4 sacs de glaçons de bar',
     amount: 1200,
@@ -335,6 +353,8 @@ export const INITIAL_EXPENSES: Expense[] = [
   },
   {
     id: 'exp3',
+    companyId: 'comp_lmd88412',
+    companyCode: 'LMD88412',
     category: 'Électricité & Eau',
     description: 'Recharge Inverter & Génératrice Diesel',
     amount: 7500,

@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   Trash2,
   Edit2,
-  Sparkles,
+  Clock,
   AlertCircle,
   Building2,
   CheckCircle2,
@@ -367,9 +367,9 @@ export const PreRegistrationTab: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenCreateModal}
-              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-lg shadow-2xs flex items-center gap-1.5 transition cursor-pointer active:scale-95 shrink-0"
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 transition cursor-pointer active:scale-95 shrink-0"
             >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Pré-inscrire</span>
             </button>
           </div>
@@ -440,7 +440,7 @@ export const PreRegistrationTab: React.FC = () => {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                          <Sparkles className="w-3 h-3 text-amber-500" />
+                          <Clock className="w-3 h-3 text-amber-600" />
                           En attente
                         </span>
                       )}
@@ -754,7 +754,7 @@ export const PreRegistrationTab: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? "Enregistrement..." : editingPreReg ? "Mettre à jour" : "Pré-inscrire l'Employé"}
                 </button>
