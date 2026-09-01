@@ -50,6 +50,15 @@ export const TrialExpiredScreen: React.FC = () => {
             <span className="hidden sm:inline">Déconnexion</span>
           </button>
 
+          {/* BarExp Brand Logo */}
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-950 p-1 shadow-lg flex items-center justify-center mb-3 border border-white/20">
+            <img 
+              src="/icons/icon-192.png" 
+              alt="BarExp Logo" 
+              className="w-full h-full object-contain rounded-xl"
+            />
+          </div>
+
           <div className={`mx-auto w-14 h-14 rounded-2xl p-1 shadow-lg flex items-center justify-center mb-3 ${
             isDisapproved 
               ? 'bg-red-500 text-white shadow-red-500/30' 

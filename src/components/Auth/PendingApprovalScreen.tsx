@@ -47,13 +47,22 @@ export const PendingApprovalScreen: React.FC = () => {
               ? 'bg-gradient-to-br from-red-900 to-slate-900' 
               : 'bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950'
         }`}>
-          <div className="mx-auto w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 mb-4 shadow-inner">
+          {/* BarExp Brand Logo */}
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-950 p-1 shadow-lg flex items-center justify-center mb-3 border border-white/20">
+            <img 
+              src="/icons/icon-192.png" 
+              alt="BarExp Logo" 
+              className="w-full h-full object-contain rounded-xl"
+            />
+          </div>
+
+          <div className="mx-auto w-16 h-16 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 mb-3 shadow-inner">
             {isSuspended ? (
-              <UserX className="w-10 h-10 text-orange-400" />
+              <UserX className="w-8 h-8 text-orange-400" />
             ) : isRejected ? (
-              <ShieldAlert className="w-10 h-10 text-red-400" />
+              <ShieldAlert className="w-8 h-8 text-red-400" />
             ) : (
-              <Clock className="w-10 h-10 text-amber-400 animate-pulse" />
+              <Clock className="w-8 h-8 text-amber-400 animate-pulse" />
             )}
           </div>
 

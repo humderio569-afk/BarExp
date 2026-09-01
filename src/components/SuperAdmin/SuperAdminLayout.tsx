@@ -51,7 +51,12 @@ export const SuperAdminLayout: React.FC = () => {
             
             {/* Brand Logo & Super Admin Identifier */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/icons/icon-192.png" 
+                  alt="BarExp" 
+                  className="w-7 h-7 rounded-lg object-contain bg-slate-900 border border-slate-700 p-0.5" 
+                />
                 <span className="font-black text-lg text-white tracking-tight leading-none">
                   BarExp
                 </span>

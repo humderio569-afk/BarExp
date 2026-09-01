@@ -31,7 +31,9 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
 
   if (!isOpen) return null;
 
-  const shortcuts = [
+  const isInstalledOrStandalone = pwaState.isStandalone || pwaState.isInstalled;
+
+  const allShortcuts = [
     {
       key: 'F1',
       action: 'Valider & Encaisser',
@@ -67,13 +69,13 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
       badge: 'Caisse POS',
       color: 'bg-blue-50 text-blue-800 border-blue-200'
     },
-    {
+    ...(!isInstalledOrStandalone ? [{
       key: 'F9 ou Alt + I',
       action: 'Installer l\'application (1 Clic)',
       desc: 'Installe directement BarExp comme application autonome sur votre PC ou tablette.',
       badge: 'Bureau / PWA',
       color: 'bg-amber-50 text-amber-900 border-amber-300'
-    },
+    }] : []),
     {
       key: 'Échap (Escape)',
       action: 'Fermer les fenêtres',
@@ -115,18 +117,22 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-amber-500 text-slate-950 rounded-2xl shadow-md">
-              <Keyboard className="w-5 h-5 stroke-[2.5]" />
+            <div className="w-11 h-11 rounded-2xl bg-slate-950 p-1 border border-slate-700 shadow-md flex items-center justify-center shrink-0">
+              <img 
+                src="/icons/icon-192.png" 
+                alt="BarExp Logo" 
+                className="w-full h-full object-contain rounded-xl"
+              />
             </div>
             <div>
               <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <span>Raccourcis Clavier Pro</span>
+                <span>Raccourcis & Documentation</span>
                 <span className="text-[10px] bg-slate-900 text-amber-400 px-2 py-0.5 rounded-full font-black uppercase">
-                  POS & Web App
+                  BarExp Pro
                 </span>
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Accélérez vos encaissements et installez l'application en 1 frappe.
+                Accélérez vos encaissements et gérez votre établissement au clavier.
               </p>
             </div>
           </div>
@@ -138,33 +144,35 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
           </button>
         </div>
 
-        {/* Quick 1-Click Install Banner */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 p-3.5 rounded-2xl shadow-md flex items-center justify-between gap-3 mb-4 shrink-0">
-          <div className="flex items-center space-x-2.5">
-            <div className="p-2 bg-slate-950/15 rounded-xl">
-              <Laptop className="w-5 h-5 text-slate-950" />
+        {/* Quick 1-Click Install Banner - Only when in web browser, NOT standalone */}
+        {!isInstalledOrStandalone && (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 p-3.5 rounded-2xl shadow-md flex items-center justify-between gap-3 mb-4 shrink-0">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 bg-slate-950/15 rounded-xl">
+                <Laptop className="w-5 h-5 text-slate-950" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide">
+                  Installation 1-Clic sur PC (PWA)
+                </p>
+                <p className="text-[11px] font-semibold opacity-90">
+                  Pressez <kbd className="px-1.5 py-0.5 bg-slate-950 text-white rounded font-mono text-[10px] font-black">F9</kbd> ou <kbd className="px-1.5 py-0.5 bg-slate-950 text-white rounded font-mono text-[10px] font-black">Alt + I</kbd> à tout moment
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-black uppercase tracking-wide">
-                Installation 1-Clic sur PC (PWA)
-              </p>
-              <p className="text-[11px] font-semibold opacity-90">
-                Pressez <kbd className="px-1.5 py-0.5 bg-slate-950 text-white rounded font-mono text-[10px] font-black">F9</kbd> ou <kbd className="px-1.5 py-0.5 bg-slate-950 text-white rounded font-mono text-[10px] font-black">Alt + I</kbd> à tout moment
-              </p>
-            </div>
+            <button
+              onClick={handleQuickInstall}
+              className="px-3 py-1.5 bg-slate-950 hover:bg-slate-900 text-amber-400 text-xs font-black rounded-xl transition cursor-pointer shrink-0 shadow-xs flex items-center space-x-1"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Installer</span>
+            </button>
           </div>
-          <button
-            onClick={handleQuickInstall}
-            className="px-3 py-1.5 bg-slate-950 hover:bg-slate-900 text-amber-400 text-xs font-black rounded-xl transition cursor-pointer shrink-0 shadow-xs flex items-center space-x-1"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Installer</span>
-          </button>
-        </div>
+        )}
 
         {/* Shortcuts List */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
-          {shortcuts.map((s, idx) => (
+          {allShortcuts.map((s, idx) => (
             <div 
               key={idx}
               className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-2xl flex items-center justify-between gap-3 transition"

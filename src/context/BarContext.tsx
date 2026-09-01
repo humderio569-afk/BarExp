@@ -808,6 +808,14 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Auth state listener
     const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
       clearTimeout(safetyTimer);
+      const isExplicitlyLoggedOut = safeGetItem('barexpress_explicit_logout') === 'true';
+      if (isExplicitlyLoggedOut) {
+        setCurrentUser(null);
+        safeRemoveItem(STORAGE_KEYS.CACHED_USER);
+        setAuthLoading(false);
+        return;
+      }
+
       if (fbUser && fbUser.email) {
         const userEmail = fbUser.email.toLowerCase();
         const isSuper = userEmail === SUPER_ADMIN_EMAIL.toLowerCase();
@@ -1141,6 +1149,9 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       if (updates.taxRate !== undefined) {
         setSettings(prev => ({ ...prev, taxRate: updates.taxRate }));
+      }
+      if (updates.allowCameraScanner !== undefined) {
+        setSettings(prev => ({ ...prev, allowCameraScanner: updates.allowCameraScanner }));
       }
     }
 
@@ -1883,15 +1894,15 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = async () => {
+    safeSetItem('barexpress_explicit_logout', 'true');
+    safeRemoveItem(STORAGE_KEYS.CACHED_USER);
+    safeRemoveItem(STORAGE_KEYS.IMPERSONATED_COMPANY_ID);
+    setCurrentUser(null);
     try {
       await signOut(auth);
     } catch (e) {
       console.warn('SignOut note:', e);
     }
-    safeSetItem('barexpress_explicit_logout', 'true');
-    safeRemoveItem(STORAGE_KEYS.CACHED_USER);
-    safeRemoveItem(STORAGE_KEYS.IMPERSONATED_COMPANY_ID);
-    setCurrentUser(null);
   };
 
   const approveUser = async (uid: string, role: UserRole = 'employee', customPermissions?: Partial<UserPermissions>) => {
@@ -2119,6 +2130,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (currentUser && currentUser.uid === uid) {
       setCurrentUser(updated);
+      safeSetItem(STORAGE_KEYS.CACHED_USER, JSON.stringify(updated));
     }
 
     await addAuditLog(

@@ -70,11 +70,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const isFeatureAllowed = useMemo(() => {
     if (isSuperAdmin) return true;
     if (activeCompany?.allowCameraScanner === true) return true;
-    if (settings.allowCameraScanner === true) return true;
-    // Default to true if not explicitly forbidden to prevent blocking standard users
-    if (activeCompany?.allowCameraScanner === undefined && settings.allowCameraScanner === undefined) return true;
     return false;
-  }, [isSuperAdmin, activeCompany, settings]);
+  }, [isSuperAdmin, activeCompany]);
 
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');

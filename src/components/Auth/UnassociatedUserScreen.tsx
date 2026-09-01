@@ -114,8 +114,12 @@ export const UnassociatedUserScreen: React.FC = () => {
             <span className="hidden sm:inline">Déconnexion</span>
           </button>
 
-          <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 p-1 shadow-lg shadow-amber-500/20 flex items-center justify-center mb-3">
-            <span className="text-slate-950 font-black text-xl tracking-tighter">BE</span>
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-slate-950 p-1.5 shadow-xl shadow-amber-500/20 flex items-center justify-center mb-3 border border-amber-500/30">
+            <img 
+              src="/icons/icon-192.png" 
+              alt="BarExp Logo" 
+              className="w-full h-full object-contain rounded-xl"
+            />
           </div>
 
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">BarExp Plateforme</h2>

@@ -11,6 +11,7 @@ import {
   DEFAULT_DISPLAY_PREFERENCES 
 } from './POSDisplaySettingsModal';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
+import { CashierNamePromptModal } from './CashierNamePromptModal';
 import { 
   Search, 
   Package, 
@@ -43,9 +44,29 @@ export const POSGrid: React.FC = () => {
     settings,
     activeCompany,
     isSuperAdmin,
+    currentUser,
   } = useBar();
 
-  const isCameraScannerAllowed = isSuperAdmin || activeCompany?.allowCameraScanner === true || settings.allowCameraScanner === true;
+  // Camera scanner is strictly allowed ONLY if enabled by Super Admin for this company
+  const isCameraScannerAllowed = isSuperAdmin || activeCompany?.allowCameraScanner === true;
+
+  // First-time or incomplete name cashier verification
+  const isNameIncomplete = useMemo(() => {
+    if (!currentUser) return false;
+    const name = (currentUser.displayName || '').trim();
+    if (name.length < 3) return true;
+    if (name.includes('@')) return true;
+    if (currentUser.email && name.toLowerCase() === currentUser.email.split('@')[0].toLowerCase()) return true;
+    return false;
+  }, [currentUser]);
+
+  const [isCashierNameModalOpen, setIsCashierNameModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (isNameIncomplete) {
+      setIsCashierNameModalOpen(true);
+    }
+  }, [isNameIncomplete]);
 
   const [flavorProductModal, setFlavorProductModal] = useState<Product | null>(null);
   const [quickQuantityProductModal, setQuickQuantityProductModal] = useState<Product | null>(null);
@@ -275,35 +296,23 @@ export const POSGrid: React.FC = () => {
           })}
         </div>
 
-        {/* Actions Toolbar: Scanner + Display Settings */}
+        {/* Actions Toolbar: Scanner (if enabled) + Display Settings */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => setIsBarcodeScannerOpen(true)}
-            className={`p-2 sm:px-3 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95 border ${
-              isCameraScannerAllowed
-                ? 'bg-slate-900 hover:bg-slate-800 text-amber-400 border-slate-800'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border-slate-200'
-            }`}
-            title={
-              isCameraScannerAllowed
-                ? "Scanner des codes-barres avec la caméra (Raccourci: F4)"
-                : "Scanner Caméra (Activable uniquement par le Super Admin)"
-            }
-          >
-            {isCameraScannerAllowed ? (
+          {isCameraScannerAllowed && (
+            <button
+              onClick={() => setIsBarcodeScannerOpen(true)}
+              className="p-2 sm:px-3 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95 border bg-slate-900 hover:bg-slate-800 text-amber-400 border-slate-800"
+              title="Scanner des codes-barres avec la caméra (Raccourci: F4)"
+            >
               <ScanBarcode className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Lock className="w-3.5 h-3.5 text-slate-400" />
-            )}
-            <span className="text-xs font-black hidden sm:inline">
-              Scanner
-            </span>
-            {isCameraScannerAllowed && (
+              <span className="text-xs font-black hidden sm:inline">
+                Scanner
+              </span>
               <kbd className="hidden lg:inline-block px-1 py-0.2 bg-slate-800 text-amber-300 rounded font-mono text-[9px] font-black">
                 F4
               </kbd>
-            )}
-          </button>
+            </button>
+          )}
 
           <button
             onClick={() => setIsDisplaySettingsOpen(true)}
@@ -787,6 +796,12 @@ export const POSGrid: React.FC = () => {
           onClose={() => setIsAddProductModalOpen(false)}
         />
       )}
+
+      {/* Mandatory Cashier Full Name Prompt Modal */}
+      <CashierNamePromptModal
+        isOpen={isCashierNameModalOpen}
+        onClose={() => setIsCashierNameModalOpen(false)}
+      />
 
     </div>
   );

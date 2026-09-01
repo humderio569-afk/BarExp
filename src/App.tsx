@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar';
 import { MobileNav } from './components/MobileNav';
 import { POSGrid } from './components/POS/POSGrid';
 import { CartPanel } from './components/POS/CartPanel';
+import { POSAccessRestricted } from './components/POS/POSAccessRestricted';
 import { StockList } from './components/Stock/StockList';
 import { ExpenseTracker } from './components/Expenses/ExpenseTracker';
 import { SalesReports } from './components/Reports/SalesReports';
@@ -20,15 +21,26 @@ import { ToastContainer } from './components/Common/ToastContainer';
 import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
 
 const MainContent: React.FC = () => {
-  const { activeTab, isAdmin } = useBar();
+  const { activeTab, isAdmin, isSuperAdmin, currentUser } = useBar();
+
+  const canUsePOS = 
+    isSuperAdmin || 
+    isAdmin || 
+    currentUser?.role === 'admin' || 
+    currentUser?.role === 'manager' || 
+    currentUser?.permissions?.canAccessPOS === true;
 
   return (
     <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
       {activeTab === 'pos' && (
-        <>
-          <POSGrid />
-          <CartPanel />
-        </>
+        canUsePOS ? (
+          <>
+            <POSGrid />
+            <CartPanel />
+          </>
+        ) : (
+          <POSAccessRestricted />
+        )
       )}
 
       {activeTab === 'stock' && (
@@ -80,9 +92,18 @@ const AppShell: React.FC = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen w-screen bg-slate-950 flex flex-col items-center justify-center p-4 text-white">
-        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold tracking-wide text-amber-400">Initialisation de la session BarExp...</p>
-        <p className="text-xs text-slate-400 mt-1">Connexion à Firebase Firestore & Google Auth</p>
+        <div className="relative mb-5">
+          <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-amber-500/40 p-2 shadow-2xl shadow-amber-500/20 flex items-center justify-center">
+            <img 
+              src="/icons/icon-192.png" 
+              alt="BarExp" 
+              className="w-full h-full object-contain rounded-xl"
+            />
+          </div>
+          <div className="absolute -inset-1 rounded-3xl border-2 border-amber-500 border-t-transparent animate-spin" />
+        </div>
+        <p className="text-sm font-black tracking-wide text-amber-400">Initialisation de la session BarExp...</p>
+        <p className="text-xs text-slate-400 mt-1">Connexion à Firebase Firestore & Données Locales</p>
       </div>
     );
   }
