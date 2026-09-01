@@ -3,7 +3,6 @@ import { useBar } from '../../context/BarContext';
 import { QuotaTracker } from '../../services/quotaTracker';
 import {
   Bot,
-  Sparkles,
   KeyRound,
   Cpu,
   Eye,
@@ -90,7 +89,7 @@ export const PlatformAIView: React.FC = () => {
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between text-slate-500 text-xs font-bold mb-1">
             <span>Requêtes IA Traitées Aujourd'hui</span>
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <Bot className="w-4 h-4 text-amber-500" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-black text-slate-900">{totalAIQueries.toLocaleString('fr-FR')}</span>
@@ -277,7 +276,7 @@ export const PlatformAIView: React.FC = () => {
                     <td className="py-3 px-4">
                       {isActive ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                          <Sparkles className="w-3 h-3 text-emerald-500" />
+                          <Bot className="w-3 h-3 text-emerald-500" />
                           Actif
                         </span>
                       ) : (

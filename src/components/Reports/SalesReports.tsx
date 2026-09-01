@@ -16,7 +16,6 @@ import {
   Banknote,
   Percent,
   LineChart as LineChartIcon,
-  Sparkles,
   Download,
   Search,
   ChevronRight,

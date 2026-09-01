@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Product, StockLog } from '../../types';
 import { useBar } from '../../context/BarContext';
+import { BarcodeLabelModal } from './BarcodeLabelModal';
 import {
   X,
   Package,
@@ -20,7 +21,8 @@ import {
   BarChart3,
   Tag,
   ShieldAlert,
-  Boxes
+  Boxes,
+  ScanBarcode
 } from 'lucide-react';
 
 interface ProductStockDetailModalProps {
@@ -38,6 +40,7 @@ export const ProductStockDetailModal: React.FC<ProductStockDetailModalProps> = (
 }) => {
   const { settings, stockLogs, currentUser, isAdmin } = useBar();
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'varieties'>('overview');
+  const [showBarcodeLabelModal, setShowBarcodeLabelModal] = useState(false);
 
   const perms = currentUser?.permissions;
   const canManageStock = isAdmin || perms?.canManageStock === true;
@@ -354,12 +357,23 @@ export const ProductStockDetailModal: React.FC<ProductStockDetailModalProps> = (
                     <span className="text-[10px] text-slate-400 block">Identifiant unique (ID)</span>
                     <span className="font-mono text-[10px] text-slate-500 truncate block">{product.id}</span>
                   </div>
-                  {product.barcode && (
-                    <div>
-                      <span className="text-[10px] text-slate-400 block">Code Barre / SKU</span>
-                      <span className="font-mono font-bold text-slate-800">{product.barcode}</span>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Code Barre / SKU</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="font-mono font-bold text-slate-800 text-xs">
+                        {product.barcode || 'Aucun'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowBarcodeLabelModal(true)}
+                        className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded text-[10px] flex items-center gap-1 transition cursor-pointer"
+                        title="Générer ou imprimer des étiquettes code-barres"
+                      >
+                        <ScanBarcode className="w-3 h-3 text-amber-700" />
+                        <span>{product.barcode ? 'Étiquette' : '+ Générer'}</span>
+                      </button>
                     </div>
-                  )}
+                  </div>
                   {varieties.length > 0 && (
                     <div className="col-span-2">
                       <span className="text-[10px] text-slate-400 block">{product.varietyLabel || 'Variantes'}</span>
@@ -518,6 +532,13 @@ export const ProductStockDetailModal: React.FC<ProductStockDetailModalProps> = (
         </div>
 
       </div>
+
+      {showBarcodeLabelModal && (
+        <BarcodeLabelModal
+          initialProduct={product}
+          onClose={() => setShowBarcodeLabelModal(false)}
+        />
+      )}
     </div>
   );
 };

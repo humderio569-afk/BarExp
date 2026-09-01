@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBar } from '../context/BarContext';
 import { ActiveTab } from '../types';
 import { SyncStatusBanner } from './Offline/SyncStatusBanner';
 import { NotificationCenterModal } from './Common/NotificationCenterModal';
 import { PwaInstallModal } from './Offline/PwaInstallModal';
+import { KeyboardShortcutsModal } from './Common/KeyboardShortcutsModal';
 import { 
   ShoppingBag, 
   Package, 
@@ -18,7 +19,8 @@ import {
   Crown,
   Clock,
   AlertTriangle,
-  Download
+  Download,
+  Keyboard
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -40,7 +42,22 @@ export const Navbar: React.FC = () => {
 
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isPwaModalOpen, setIsPwaModalOpen] = useState(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Global event triggers from keyboard shortcuts
+  useEffect(() => {
+    const handlePwaInstallEvent = () => setIsPwaModalOpen(true);
+    const handleShortcutsModalEvent = () => setIsShortcutsModalOpen(true);
+
+    window.addEventListener('barexp:shortcut:pwa_install', handlePwaInstallEvent);
+    window.addEventListener('barexp:shortcut:shortcuts_modal', handleShortcutsModalEvent);
+
+    return () => {
+      window.removeEventListener('barexp:shortcut:pwa_install', handlePwaInstallEvent);
+      window.removeEventListener('barexp:shortcut:shortcuts_modal', handleShortcutsModalEvent);
+    };
+  }, []);
 
   const currentCode = activeCompany?.code || settings.companyCode;
 
@@ -246,11 +263,22 @@ export const Navbar: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsPwaModalOpen(true)}
-              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition shrink-0 cursor-pointer flex items-center justify-center"
-              title="Installer l'application sur cet appareil (PC/Mobile) & Mode Hors-Ligne"
+              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition shrink-0 cursor-pointer flex items-center justify-center relative group"
+              title="Installer l'application sur cet appareil (Raccourci: F9 ou Alt+I)"
               aria-label="Installer l'application"
             >
               <Download className="w-4 h-4" />
+            </button>
+
+            {/* Keyboard Shortcuts Guide Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition shrink-0 cursor-pointer flex items-center justify-center"
+              title="Guide des Raccourcis Clavier Pro (F1, F2, F3, F4, F8, F9)"
+              aria-label="Raccourcis Clavier"
+            >
+              <Keyboard className="w-4 h-4" />
             </button>
 
             <SyncStatusBanner />
@@ -283,6 +311,13 @@ export const Navbar: React.FC = () => {
         <PwaInstallModal
           isOpen={isPwaModalOpen}
           onClose={() => setIsPwaModalOpen(false)}
+        />
+      )}
+
+      {isShortcutsModalOpen && (
+        <KeyboardShortcutsModal
+          isOpen={isShortcutsModalOpen}
+          onClose={() => setIsShortcutsModalOpen(false)}
         />
       )}
     </header>

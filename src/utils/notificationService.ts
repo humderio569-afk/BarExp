@@ -205,6 +205,30 @@ export function sendSmartNotification(options: {
   }
 }
 
+export function showToast(
+  messageOrOptions: string | { message: string; title?: string; type?: 'info' | 'success' | 'warning' | 'error' },
+  type: 'info' | 'success' | 'warning' | 'error' = 'info',
+  title: string = 'Notification'
+) {
+  if (typeof messageOrOptions === 'object') {
+    sendSmartNotification({
+      id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title: messageOrOptions.title || 'Notification',
+      message: messageOrOptions.message,
+      type: messageOrOptions.type || 'info',
+      force: true,
+    });
+  } else {
+    sendSmartNotification({
+      id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      title,
+      message: messageOrOptions,
+      type,
+      force: true,
+    });
+  }
+}
+
 export function subscribeToToasts(listener: ToastListener): () => void {
   toastListeners.add(listener);
   return () => {

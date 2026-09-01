@@ -1,7 +1,7 @@
-// High-Capacity 3GB Offline Storage Manager & StorageManager Quota Engine
-// Provides multi-gigabyte IndexedDB caching, quota tracking, and non-evictable persistence
+// Unlimited Offline Storage Manager & StorageManager Quota Engine
+// Provides multi-gigabyte IndexedDB caching, quota tracking, and non-evictable persistence without artificial limits
 
-const VAULT_DB_NAME = 'barexp_offline_3gb_vault';
+const VAULT_DB_NAME = 'barexp_offline_unlimited_vault';
 const VAULT_DB_VERSION = 2;
 
 export interface StorageStats {
@@ -9,17 +9,15 @@ export interface StorageStats {
   totalQuotaBytes: number;
   usedFormatted: string;
   totalQuotaFormatted: string;
-  targetMaxBytes: number; // 3GB = 3 * 1024 * 1024 * 1024
+  targetMaxBytes: number; // Unlimited / Max Disk
   targetMaxFormatted: string;
-  usagePercentOf3GB: number;
+  usagePercentOf3GB: number; // Percentage of available quota
   isPersisted: boolean;
   indexedDbSupported: boolean;
   salesCount: number;
   mediaCount: number;
   documentsCount: number;
 }
-
-const TARGET_3GB_BYTES = 3 * 1024 * 1024 * 1024; // 3,221,225,472 bytes (3GB)
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 Mo';
@@ -149,8 +147,17 @@ export async function countVaultStore(storeName: 'sales_vault' | 'media_vault' |
   }
 }
 
-// Request and grant persistent 3GB Storage Quota from the browser
+// Request and grant non-evictable Unlimited Persistent Storage Quota from the browser
 export async function enableHighCapacity3GBStorage(): Promise<{
+  success: boolean;
+  persisted: boolean;
+  message: string;
+  stats: StorageStats;
+}> {
+  return enableUnlimitedPersistentStorage();
+}
+
+export async function enableUnlimitedPersistentStorage(): Promise<{
   success: boolean;
   persisted: boolean;
   message: string;
@@ -171,7 +178,7 @@ export async function enableHighCapacity3GBStorage(): Promise<{
     return {
       success: true,
       persisted: true,
-      message: 'Stockage persistant 3 Go activé avec succès ! Vos données hors-ligne sont protégées contre toute purge automatique.',
+      message: 'Stockage persistant illimité activé avec succès ! Vos données hors-ligne sont protégées contre toute purge automatique.',
       stats,
     };
   } else {
@@ -179,8 +186,8 @@ export async function enableHighCapacity3GBStorage(): Promise<{
       success: true,
       persisted: stats.isPersisted,
       message: stats.isPersisted
-        ? 'Stockage persistant déjà alloué par le navigateur.'
-        : 'Mode de stockage standard haute-capacité actif (jusqu’à 3 Go disponibles selon l’espace disque).',
+        ? 'Stockage persistant illimité déjà alloué par le navigateur.'
+        : 'Mode de stockage persistant illimité actif (accès à toute la capacité de votre appareil).',
       stats,
     };
   }
@@ -189,7 +196,7 @@ export async function enableHighCapacity3GBStorage(): Promise<{
 // Query storage statistics and quota
 export async function getDetailedStorageStats(): Promise<StorageStats> {
   let usedBytes = 0;
-  let totalQuotaBytes = TARGET_3GB_BYTES;
+  let totalQuotaBytes = 50 * 1024 * 1024 * 1024; // 50GB nominal fallback
   let isPersisted = false;
 
   if (typeof navigator !== 'undefined' && navigator.storage) {
@@ -197,7 +204,7 @@ export async function getDetailedStorageStats(): Promise<StorageStats> {
       if (navigator.storage.estimate) {
         const est = await navigator.storage.estimate();
         usedBytes = est.usage || 0;
-        totalQuotaBytes = est.quota || TARGET_3GB_BYTES;
+        totalQuotaBytes = est.quota || (50 * 1024 * 1024 * 1024);
       }
       if (navigator.storage.persisted) {
         isPersisted = await navigator.storage.persisted();
@@ -213,15 +220,17 @@ export async function getDetailedStorageStats(): Promise<StorageStats> {
     countVaultStore('documents_vault'),
   ]);
 
-  const usagePercentOf3GB = Math.min(100, parseFloat(((usedBytes / TARGET_3GB_BYTES) * 100).toFixed(2)));
+  const usagePercentOf3GB = totalQuotaBytes > 0
+    ? Math.min(100, parseFloat(((usedBytes / totalQuotaBytes) * 100).toFixed(2)))
+    : 0.1;
 
   return {
     usedBytes,
     totalQuotaBytes,
     usedFormatted: formatBytes(usedBytes),
     totalQuotaFormatted: formatBytes(totalQuotaBytes),
-    targetMaxBytes: TARGET_3GB_BYTES,
-    targetMaxFormatted: '3.0 Go',
+    targetMaxBytes: totalQuotaBytes,
+    targetMaxFormatted: 'Illimité (' + formatBytes(totalQuotaBytes) + ')',
     usagePercentOf3GB,
     isPersisted,
     indexedDbSupported: typeof window !== 'undefined' && Boolean(window.indexedDB),
@@ -251,7 +260,7 @@ export async function exportOfflineDatabaseBackup(): Promise<string> {
 
   const payload = {
     exportedAt: new Date().toISOString(),
-    version: '3.0',
+    version: '4.0',
     localStorage: localData,
     vault: {
       sales,

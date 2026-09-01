@@ -9,7 +9,6 @@ import {
   Clock,
   Phone,
   ArrowRight,
-  Sparkles,
   Camera,
   FileCheck,
   ShieldCheck,

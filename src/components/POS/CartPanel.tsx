@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBar } from '../../context/BarContext';
 import { PaymentModal } from './PaymentModal';
 import { ReceiptModal } from './ReceiptModal';
 import { QuickQuantityModal } from './QuickQuantityModal';
 import { CustomPriceModal } from './CustomPriceModal';
+import { registerShortcutHandlers } from '../../hooks/useGlobalKeyboardShortcuts';
 import { Sale, Product, CartItem } from '../../types';
 import { 
   ShoppingBag, 
@@ -22,7 +23,8 @@ import {
   Calculator,
   Gavel,
   Coins,
-  Edit2
+  Edit2,
+  Keyboard
 } from 'lucide-react';
 
 export const CartPanel: React.FC = () => {
@@ -70,6 +72,55 @@ export const CartPanel: React.FC = () => {
     saveTabToTable(activeTable);
     alert(`Fiche sauvegardée pour ${activeTable}`);
   };
+
+  // Connect Keyboard Shortcuts (F1, F2, F8, Escape) to Cart Actions
+  useEffect(() => {
+    const unregister = registerShortcutHandlers({
+      onOpenPayment: () => {
+        if (cart.length > 0) {
+          setIsPaymentOpen(true);
+        }
+      },
+      onConfirmCancelCart: () => {
+        if (cart.length > 0) {
+          setIsCancelConfirmOpen(true);
+        }
+      },
+      onHoldTab: () => {
+        if (cart.length > 0) {
+          handleHoldTab();
+        }
+      },
+      onCloseActiveModal: () => {
+        if (isCancelConfirmOpen) setIsCancelConfirmOpen(false);
+        else if (isPaymentOpen) setIsPaymentOpen(false);
+        else if (isReceiptOpen) setIsReceiptOpen(false);
+        else if (editingQuantityItem) setEditingQuantityItem(null);
+        else if (editingPriceItem) setEditingPriceItem(null);
+      }
+    });
+
+    const handleShortcutPaymentEvent = () => {
+      if (cart.length > 0) setIsPaymentOpen(true);
+    };
+    const handleShortcutCancelEvent = () => {
+      if (cart.length > 0) setIsCancelConfirmOpen(true);
+    };
+    const handleShortcutHoldTabEvent = () => {
+      if (cart.length > 0) handleHoldTab();
+    };
+
+    window.addEventListener('barexp:shortcut:payment', handleShortcutPaymentEvent);
+    window.addEventListener('barexp:shortcut:cancel_cart', handleShortcutCancelEvent);
+    window.addEventListener('barexp:shortcut:hold_tab', handleShortcutHoldTabEvent);
+
+    return () => {
+      unregister();
+      window.removeEventListener('barexp:shortcut:payment', handleShortcutPaymentEvent);
+      window.removeEventListener('barexp:shortcut:cancel_cart', handleShortcutCancelEvent);
+      window.removeEventListener('barexp:shortcut:hold_tab', handleShortcutHoldTabEvent);
+    };
+  }, [cart, isCancelConfirmOpen, isPaymentOpen, isReceiptOpen, editingQuantityItem, editingPriceItem, activeTable]);
 
   return (
     <>
@@ -130,10 +181,14 @@ export const CartPanel: React.FC = () => {
           {cart.length > 0 && (
             <button
               onClick={() => setIsCancelConfirmOpen(true)}
-              className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center space-x-1 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition border border-red-200"
+              className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center space-x-1.5 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition border border-red-200 cursor-pointer"
+              title="Annuler le ticket (Raccourci: F2)"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Vider</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.2 bg-red-100 text-red-800 border border-red-300 rounded font-mono text-[10px] font-black">
+                F2
+              </kbd>
             </button>
           )}
         </div>
@@ -417,19 +472,27 @@ export const CartPanel: React.FC = () => {
             <button
               onClick={handleHoldTab}
               disabled={cart.length === 0}
-              className="py-3 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center space-x-1.5 transition active:scale-95"
+              title="Garder en Fiche (Raccourci: F8)"
+              className="py-3 px-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center space-x-1.5 transition active:scale-95 cursor-pointer"
             >
               <Clock className="w-4 h-4 text-amber-600" />
               <span>Garder en Fiche</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.2 bg-white text-slate-700 border border-slate-300 rounded font-mono text-[10px] font-black">
+                F8
+              </kbd>
             </button>
 
             <button
               onClick={() => setIsPaymentOpen(true)}
               disabled={cart.length === 0}
-              className="py-3 px-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-1.5 transition active:scale-95"
+              title="Encaisser la commande (Raccourci: F1)"
+              className="py-3 px-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center justify-center space-x-1.5 transition active:scale-95 cursor-pointer"
             >
               <CreditCard className="w-4 h-4 stroke-[2.5]" />
               <span>ENCAISSER</span>
+              <kbd className="px-1.5 py-0.2 bg-slate-950 text-amber-400 rounded font-mono text-[11px] font-black shadow-xs">
+                F1
+              </kbd>
             </button>
           </div>
 

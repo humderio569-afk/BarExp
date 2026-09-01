@@ -10,7 +10,7 @@ import {
   HardDrive, 
   WifiOff, 
   ShieldCheck,
-  Sparkles,
+  Zap,
   Layers,
   ArrowRight
 } from 'lucide-react';
@@ -103,7 +103,7 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
         <div className="p-4 bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-2xl border border-slate-800 space-y-3 relative overflow-hidden shadow-lg">
           <div className="flex items-center justify-between">
             <span className="px-2.5 py-1 bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[10px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />
+              <Zap className="w-3 h-3 text-amber-400" />
               PWA 100% Autonome
             </span>
             <span className="text-[11px] text-slate-400 font-bold flex items-center gap-1">
@@ -121,14 +121,14 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
             </p>
           </div>
 
-          {/* Offline 3GB Badge */}
+          {/* Offline Unlimited Badge */}
           <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
             <div className="flex items-center space-x-2 text-slate-300">
               <HardDrive className="w-4 h-4 text-amber-400" />
               <span>Stockage local sécurisé :</span>
             </div>
             <span className="font-black text-amber-300 bg-slate-800/80 px-2 py-0.5 rounded-md">
-              Jusqu'à 3.0 Go alloués
+              Persistant &amp; Illimité
             </span>
           </div>
         </div>
@@ -158,10 +158,10 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
             <div className="flex items-center gap-1.5 font-black text-slate-900">
               <HardDrive className="w-3.5 h-3.5 text-blue-600" />
-              <span>Coffre 3 Go</span>
+              <span>Coffre Illimité</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-snug">
-              Historique complet, factures PDF et reçus stockés en local.
+              Historique complet, factures PDF et reçus stockés en local sans restriction.
             </p>
           </div>
         </div>
@@ -190,10 +190,14 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
           <div className="space-y-3">
             <button
               onClick={handleInstallClick}
+              title="Installer l'application (Raccourci: F9 ou Alt+I)"
               className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition cursor-pointer active:scale-98"
             >
               <Download className="w-4 h-4" />
               <span>INSTALLER L'APPLICATION SUR CET APPAREIL</span>
+              <kbd className="hidden sm:inline-block ml-1.5 px-2 py-0.5 bg-slate-950 text-amber-400 rounded-lg font-mono text-xs font-black shadow-xs">
+                F9 / Alt + I
+              </kbd>
             </button>
             <p className="text-[11px] text-center text-slate-500">
               Compatible Google Chrome, Microsoft Edge, Brave, Android et ordinateurs Windows / Mac / Linux.
@@ -201,13 +205,13 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
           </div>
         )}
 
-        {/* 3GB Local Storage Optimization Grant Button */}
+        {/* Unlimited Local Storage Optimization Grant Button */}
         <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <HardDrive className="w-4 h-4 text-slate-700" />
               <span className="text-xs font-bold text-slate-900">
-                Statut du Coffre Local (3 Go) :
+                Statut du Coffre Local (Persistant & Illimité) :
               </span>
             </div>
             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
@@ -228,7 +232,7 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
 
           <div className="flex items-center justify-between text-[11px] text-slate-500">
             <span>Utilisé : {storageStats?.usedFormatted || '0 Mo'}</span>
-            <span>Objectif disponible : {storageStats?.targetMaxFormatted || '3.0 Go'}</span>
+            <span>Capacité : {storageStats?.targetMaxFormatted || 'Illimité'}</span>
           </div>
 
           {!storageStats?.isPersisted && (
@@ -238,7 +242,7 @@ export const PwaInstallModal: React.FC<PwaInstallModalProps> = ({ isOpen, onClos
               className="w-full mt-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer flex items-center justify-center space-x-1.5"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{isActivating3GB ? 'Vérification...' : 'Garantir la persistance illimitée 3 Go'}</span>
+              <span>{isActivating3GB ? 'Vérification...' : 'Garantir la persistance illimitée'}</span>
             </button>
           )}
         </div>

@@ -19,7 +19,6 @@ import {
   CreditCard,
   Camera,
   Calendar,
-  Sparkles,
   Check,
   MessageSquare
 } from 'lucide-react';

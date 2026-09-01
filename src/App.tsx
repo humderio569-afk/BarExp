@@ -17,6 +17,7 @@ import { UnassociatedUserScreen } from './components/Auth/UnassociatedUserScreen
 import { TrialExpiredScreen } from './components/Billing/TrialExpiredScreen';
 import { SuperAdminLayout } from './components/SuperAdmin/SuperAdminLayout';
 import { ToastContainer } from './components/Common/ToastContainer';
+import { useGlobalKeyboardShortcuts } from './hooks/useGlobalKeyboardShortcuts';
 
 const MainContent: React.FC = () => {
   const { activeTab, isAdmin } = useBar();
@@ -64,6 +65,8 @@ const MainContent: React.FC = () => {
 };
 
 const AppShell: React.FC = () => {
+  useGlobalKeyboardShortcuts();
+
   const { 
     currentUser, 
     authLoading, 

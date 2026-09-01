@@ -11,6 +11,7 @@ import { SmartInventoryAlertsModal } from './SmartInventoryAlertsModal';
 import { StockHistoryModal } from './StockHistoryModal';
 import { EnterpriseReportModal } from '../Reports/EnterpriseReportModal';
 import { ProductStockDetailModal } from './ProductStockDetailModal';
+import { BarcodeLabelModal } from './BarcodeLabelModal';
 import { safeGetItem, safeSetItem } from '../../utils/storage';
 import { 
   Package, 
@@ -42,7 +43,8 @@ import {
   CheckCircle2,
   FolderTree,
   ChevronRight,
-  Briefcase
+  Briefcase,
+  ScanBarcode
 } from 'lucide-react';
 
 export type StockViewMode = 'visual_grid' | 'compact_grid' | 'table_list' | 'category_grouped';
@@ -81,6 +83,8 @@ export const StockList: React.FC = () => {
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   const [isUnitManagerOpen, setIsUnitManagerOpen] = useState(false);
+  const [isBarcodeLabelModalOpen, setIsBarcodeLabelModalOpen] = useState(false);
+  const [barcodeModalProduct, setBarcodeModalProduct] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [detailProduct, setDetailProduct] = useState<Product | null>(null);
@@ -247,6 +251,19 @@ export const StockList: React.FC = () => {
             >
               <Printer className="w-4 h-4 text-amber-600 shrink-0" />
               <span className="truncate">Rapport</span>
+            </button>
+
+            {/* Barcode & Labels Button */}
+            <button
+              onClick={() => {
+                setBarcodeModalProduct(null);
+                setIsBarcodeLabelModalOpen(true);
+              }}
+              className="justify-center px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-black rounded-xl border border-slate-200 flex items-center space-x-1.5 transition cursor-pointer"
+              title="Générer des codes-barres universels et imprimer des étiquettes autocollantes"
+            >
+              <ScanBarcode className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="truncate">Étiquettes & Codes</span>
             </button>
 
             {/* Categories Manager Button */}
@@ -1339,6 +1356,17 @@ export const StockList: React.FC = () => {
         <EnterpriseReportModal
           defaultReportType={reportTypeModal}
           onClose={() => setReportTypeModal(null)}
+        />
+      )}
+
+      {/* Barcode & Label Sticker Generator / Printing Modal */}
+      {isBarcodeLabelModalOpen && (
+        <BarcodeLabelModal
+          initialProduct={barcodeModalProduct}
+          onClose={() => {
+            setIsBarcodeLabelModalOpen(false);
+            setBarcodeModalProduct(null);
+          }}
         />
       )}
 

@@ -2824,7 +2824,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       sendSmartNotification({
         id: `sale-off-${newSale.id}`,
         title: 'Vente Hors-Ligne Validée',
-        message: `Ticket #${receiptNum} enregistré en local (Coffre 3 Go actif).`,
+        message: `Ticket #${receiptNum} enregistré en local (Coffre Illimité actif).`,
         type: 'info',
       });
     } else {

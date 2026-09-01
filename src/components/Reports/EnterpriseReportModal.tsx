@@ -23,7 +23,6 @@ import {
   Landmark,
   Scale,
   Lock,
-  Sparkles,
   Award,
   CheckCircle2,
   Percent,

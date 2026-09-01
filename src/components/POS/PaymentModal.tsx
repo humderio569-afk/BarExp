@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBar } from '../../context/BarContext';
 import { PaymentMethod, Sale } from '../../types';
 import { Banknote, Smartphone, CreditCard, User, X, Check, Calculator, Printer, AlertTriangle } from 'lucide-react';
@@ -57,6 +57,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onSuccess }
 
     executeCheckout();
   };
+
+  // Keyboard Shortcuts inside Payment Modal (Enter or F1 to pay, Escape/F2 to cancel)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'F2') {
+        e.preventDefault();
+        if (showMajorConfirm) {
+          setShowMajorConfirm(false);
+        } else {
+          onClose();
+        }
+        return;
+      }
+
+      if (e.key === 'Enter' || e.key === 'F1') {
+        e.preventDefault();
+        if (showMajorConfirm) {
+          setShowMajorConfirm(false);
+          executeCheckout();
+        } else if (isSufficient && !isProcessing) {
+          handlePay();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showMajorConfirm, isSufficient, isProcessing, numericPaid, paymentMethod, cartTotal, activeTable]);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain animate-fadeIn">
@@ -230,10 +258,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onSuccess }
           <button
             onClick={handlePay}
             disabled={!isSufficient || isProcessing}
+            title="Valider la commande (Raccourci: F1 ou Entrée)"
             className="w-full py-3.5 sm:py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 text-slate-950 font-black text-base sm:text-lg rounded-2xl shadow-xl shadow-amber-500/20 flex items-center justify-center space-x-2 transition active:scale-95 cursor-pointer"
           >
             <Check className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
             <span>VALIDER & IMPRIMER TICKET</span>
+            <kbd className="hidden sm:inline-block ml-1.5 px-2 py-0.5 bg-slate-950 text-amber-400 rounded-lg font-mono text-xs font-black shadow-xs">
+              F1 / Entrée ↵
+            </kbd>
           </button>
         </div>
 

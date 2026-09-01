@@ -12,7 +12,6 @@ import {
   Database,
   History,
   LogOut,
-  Sparkles,
   ShieldCheck,
   Activity,
   Server,

@@ -11,7 +11,7 @@ import {
   ShieldCheck, 
   Download, 
   HardDrive,
-  Sparkles
+  Smartphone
 } from 'lucide-react';
 import { PwaInstallModal } from './PwaInstallModal';
 import { getDetailedStorageStats, enableHighCapacity3GBStorage, StorageStats } from '../../utils/storageQuota';
@@ -82,7 +82,7 @@ export const SyncStatusBanner: React.FC = () => {
         onClick={() => setIsModalOpen(true)}
         className="relative p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition shrink-0 cursor-pointer flex items-center justify-center"
         title={isConnected 
-          ? (pendingSalesCount > 0 ? `En ligne (${pendingSalesCount} vente(s) à synchroniser)` : 'En ligne & synchronisé (Coffre 3 Go actif)') 
+          ? (pendingSalesCount > 0 ? `En ligne (${pendingSalesCount} vente(s) à synchroniser)` : 'En ligne & synchronisé (Coffre Illimité actif)') 
           : 'Mode Hors-Ligne (Stock et caisse 100% actifs sans Internet)'
         }
       >
@@ -97,7 +97,7 @@ export const SyncStatusBanner: React.FC = () => {
         )}
       </button>
 
-      {/* Sync & Offline 3GB Details Modal */}
+      {/* Sync & Offline Unlimited Details Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
           <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 text-slate-900 relative max-h-[92vh] flex flex-col overflow-y-auto">
@@ -110,10 +110,10 @@ export const SyncStatusBanner: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-base text-slate-900">
-                    Mode Hors-Ligne & Coffre 3 Go
+                    Mode Hors-Ligne & Coffre Illimité
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Gestion autonome, synchronisation et stockage local sécurisé.
+                    Gestion autonome, synchronisation et stockage local persistant sans limite.
                   </p>
                 </div>
               </div>
@@ -145,7 +145,7 @@ export const SyncStatusBanner: React.FC = () => {
                   <p className="text-[11px] opacity-80 leading-snug">
                     {isConnected
                       ? 'Les ventes sont enregistrées localement et synchronisées en direct.'
-                      : 'Les encaissements et déstockages sont stockés dans le coffre local 3 Go.'}
+                      : 'Les encaissements et déstockages sont stockés dans le coffre local persistant illimité.'}
                   </p>
                 </div>
               </div>
@@ -155,7 +155,7 @@ export const SyncStatusBanner: React.FC = () => {
             <div className="p-3.5 bg-gradient-to-r from-slate-900 to-slate-950 text-white rounded-2xl border border-slate-800 flex items-center justify-between gap-3 shadow-md">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 text-amber-400 font-black text-xs">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Smartphone className="w-3.5 h-3.5" />
                   <span>Installer l'application BarExp</span>
                 </div>
                 <p className="text-[11px] text-slate-300">
@@ -175,12 +175,12 @@ export const SyncStatusBanner: React.FC = () => {
               </button>
             </div>
 
-            {/* 3GB Local Storage Quota Widget */}
+            {/* Unlimited Local Storage Quota Widget */}
             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1.5 font-bold text-slate-800">
                   <HardDrive className="w-4 h-4 text-amber-600" />
-                  <span>Capacité du Stockage Local (3 Go)</span>
+                  <span>Capacité du Stockage Local (Illimité)</span>
                 </div>
                 <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
                   storageStats?.isPersisted
@@ -200,7 +200,7 @@ export const SyncStatusBanner: React.FC = () => {
 
               <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <span>Espace utilisé : <b className="text-slate-900">{storageStats?.usedFormatted || '0 Mo'}</b></span>
-                <span>Quota max alloué : <b className="text-amber-700">3.0 Go</b></span>
+                <span>Capacité allouée : <b className="text-amber-700">{storageStats?.targetMaxFormatted || 'Illimité'}</b></span>
               </div>
 
               {!storageStats?.isPersisted && (
@@ -210,7 +210,7 @@ export const SyncStatusBanner: React.FC = () => {
                   className="w-full mt-1 py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-900 font-bold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{isActivating3GB ? 'Vérification...' : 'Garantir la réservation du stockage 3 Go'}</span>
+                  <span>{isActivating3GB ? 'Vérification...' : 'Garantir la persistance illimitée'}</span>
                 </button>
               )}
             </div>

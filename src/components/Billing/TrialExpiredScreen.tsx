@@ -11,7 +11,6 @@ import {
   Phone,
   Store,
   LogOut,
-  Sparkles,
   ArrowRight,
   XCircle
 } from 'lucide-react';

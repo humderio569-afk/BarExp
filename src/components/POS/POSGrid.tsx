@@ -79,6 +79,31 @@ export const POSGrid: React.FC = () => {
     }
   }, [isSearchOpen]);
 
+  // Keyboard Shortcuts (F3/Ctrl+K for Search, F4/B for Scanner, Escape to close)
+  useEffect(() => {
+    const handleSearchShortcut = () => {
+      setIsSearchOpen(true);
+      setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          searchInputRef.current.select();
+        }
+      }, 50);
+    };
+
+    const handleScannerShortcut = () => {
+      setIsBarcodeScannerOpen(true);
+    };
+
+    window.addEventListener('barexp:shortcut:search', handleSearchShortcut);
+    window.addEventListener('barexp:shortcut:scanner', handleScannerShortcut);
+
+    return () => {
+      window.removeEventListener('barexp:shortcut:search', handleSearchShortcut);
+      window.removeEventListener('barexp:shortcut:scanner', handleScannerShortcut);
+    };
+  }, []);
+
   const handleProductClick = (product: Product) => {
     if (product.stock <= 0) return;
     if (product.flavors && product.flavors.length > 0) {
@@ -166,7 +191,7 @@ export const POSGrid: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher..."
+              placeholder="Rechercher (F3)..."
               className="w-full bg-transparent text-slate-900 placeholder-slate-400 text-xs font-semibold focus:outline-none"
             />
             {searchQuery ? (
@@ -195,13 +220,17 @@ export const POSGrid: React.FC = () => {
                 ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-xs'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
             }`}
-            title="Rechercher un produit"
+            title="Rechercher un produit (Raccourci: F3 ou Ctrl+K)"
           >
             <Search className="w-4 h-4" />
-            {searchQuery && (
+            {searchQuery ? (
               <span className="ml-1 text-[10px] max-w-[60px] truncate hidden sm:inline">
                 {searchQuery}
               </span>
+            ) : (
+              <kbd className="ml-1 hidden xl:inline-block px-1 py-0.2 bg-white text-slate-600 border border-slate-300 rounded font-mono text-[9px] font-black">
+                F3
+              </kbd>
             )}
           </button>
         )}
@@ -257,7 +286,7 @@ export const POSGrid: React.FC = () => {
             }`}
             title={
               isCameraScannerAllowed
-                ? "Scanner des codes-barres avec la caméra"
+                ? "Scanner des codes-barres avec la caméra (Raccourci: F4)"
                 : "Scanner Caméra (Activable uniquement par le Super Admin)"
             }
           >
@@ -269,6 +298,11 @@ export const POSGrid: React.FC = () => {
             <span className="text-xs font-black hidden sm:inline">
               Scanner
             </span>
+            {isCameraScannerAllowed && (
+              <kbd className="hidden lg:inline-block px-1 py-0.2 bg-slate-800 text-amber-300 rounded font-mono text-[9px] font-black">
+                F4
+              </kbd>
+            )}
           </button>
 
           <button
