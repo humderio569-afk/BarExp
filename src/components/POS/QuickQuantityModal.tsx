@@ -6,12 +6,10 @@ import {
   Plus, 
   Minus, 
   Package, 
-  Calculator, 
   Layers, 
   AlertTriangle,
   Boxes,
-  ArrowRight,
-  Delete
+  Keyboard
 } from 'lucide-react';
 
 interface QuickQuantityModalProps {
@@ -43,12 +41,21 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Auto-focus and select input text for immediate keyboard typing
+    // Auto-focus and select input text for immediate physical keyboard typing
     if (inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
-  }, []);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleInputChange = (val: string) => {
     // Allow empty string temporarily while typing
@@ -74,51 +81,6 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
       setInputValue('1');
       setQuantity(1);
     }
-  };
-
-  // Numpad button click handler
-  const handleNumpadPress = (digit: string) => {
-    if (digit === 'C') {
-      setInputValue('1');
-      setQuantity(1);
-      return;
-    }
-    if (digit === 'BACKSPACE') {
-      const updated = inputValue.slice(0, -1);
-      if (updated === '' || updated === '0') {
-        setInputValue('1');
-        setQuantity(1);
-      } else {
-        const num = parseInt(updated, 10);
-        setInputValue(String(num));
-        setQuantity(num);
-      }
-      return;
-    }
-    if (digit === '00') {
-      if (inputValue === '0' || inputValue === '') {
-        setInputValue('0');
-        setQuantity(1);
-      } else {
-        const updated = inputValue + '00';
-        const num = Math.min(parseInt(updated, 10), 99999);
-        setInputValue(String(num));
-        setQuantity(num);
-      }
-      return;
-    }
-
-    // Single digit 0-9
-    let updated = inputValue;
-    if (inputValue === '1' && currentQuantity === 1 && digit !== '0') {
-      // If default 1 was not changed, start fresh with typed digit
-      updated = digit;
-    } else {
-      updated = inputValue + digit;
-    }
-    const num = Math.min(Math.max(1, parseInt(updated, 10)), 99999);
-    setInputValue(String(num));
-    setQuantity(num);
   };
 
   // Quick Preset Adders / Setters
@@ -172,7 +134,7 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
             </div>
             <div className="min-w-0">
               <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                <Calculator className="w-3.5 h-3.5" />
+                <Keyboard className="w-3.5 h-3.5" />
                 <span>{isEditingCartItem ? 'Modifier la Quantité' : 'Saisie Directe de Quantité'}</span>
               </span>
               <h3 className="font-extrabold text-base sm:text-lg text-white truncate">
@@ -271,26 +233,32 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
             </div>
           )}
 
-          {/* Big Interactive Quantity Input Display */}
-          <div className="bg-slate-50 border-2 border-amber-500/40 rounded-2xl p-3 sm:p-4 text-center space-y-2">
-            <label className="text-xs font-black uppercase text-slate-500 tracking-wider block">
-              Quantité désirée ({product.unit}s)
-            </label>
+          {/* Quantity Input with Physical Keyboard Typing */}
+          <div className="bg-slate-50 border-2 border-amber-500/40 rounded-2xl p-4 text-center space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black uppercase text-slate-600 tracking-wider">
+                Quantité ({product.unit}s)
+              </label>
+              <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                <Keyboard className="w-3.5 h-3.5 text-amber-600" />
+                <span>Utilisez le clavier de votre appareil</span>
+              </span>
+            </div>
 
-            <div className="flex items-center justify-center gap-2 sm:gap-3">
+            <div className="flex items-center justify-center gap-3">
               {/* Stepper Minus */}
               <button
                 type="button"
                 onClick={() => handleAddPreset(-1)}
                 disabled={quantity <= 1}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-700 font-black border border-slate-200 shadow-sm flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0"
-                title="Diminuer de 1"
+                className="w-12 h-12 rounded-2xl bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-700 font-black border border-slate-200 shadow-xs flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0"
+                title="Diminuer de 1 (ou Flèche Bas ↓)"
               >
                 <Minus className="w-5 h-5 stroke-[2.5]" />
               </button>
 
-              {/* Direct Text Input */}
-              <div className="flex-1 max-w-[200px] relative">
+              {/* Direct Text Input for Device Keyboard */}
+              <div className="flex-1 max-w-[220px] relative">
                 <input
                   ref={inputRef}
                   type="text"
@@ -303,9 +271,16 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       handleConfirm();
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      handleAddPreset(1);
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      handleAddPreset(-1);
                     }
                   }}
-                  className="w-full h-12 sm:h-14 bg-white border-2 border-amber-500 rounded-2xl text-center text-2xl sm:text-3xl font-black text-slate-900 shadow-inner focus:outline-none focus:ring-4 focus:ring-amber-400/30"
+                  className="w-full h-14 bg-white border-2 border-amber-500 rounded-2xl text-center text-3xl font-black text-slate-900 shadow-inner focus:outline-none focus:ring-4 focus:ring-amber-400/30"
+                  placeholder="1"
                 />
               </div>
 
@@ -313,8 +288,8 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleAddPreset(1)}
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black border border-amber-600 shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0"
-                title="Ajouter 1"
+                className="w-12 h-12 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black border border-amber-600 shadow-md flex items-center justify-center transition active:scale-95 cursor-pointer shrink-0"
+                title="Ajouter 1 (ou Flèche Haut ↑)"
               >
                 <Plus className="w-5 h-5 stroke-[3]" />
               </button>
@@ -364,82 +339,14 @@ export const QuickQuantityModal: React.FC<QuickQuantityModalProps> = ({
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Virtual Touch Numpad */}
-          <div className="bg-slate-100/80 p-2.5 sm:p-3 rounded-2xl border border-slate-200">
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-                <button
-                  key={digit}
-                  type="button"
-                  onClick={() => handleNumpadPress(digit)}
-                  className="h-10 sm:h-11 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-base sm:text-lg border border-slate-200 shadow-2xs transition active:scale-95 active:bg-amber-200 cursor-pointer flex items-center justify-center"
-                >
-                  {digit}
-                </button>
-              ))}
-
-              {/* Clear All */}
-              <button
-                type="button"
-                onClick={() => handleNumpadPress('C')}
-                className="h-10 sm:h-11 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs sm:text-sm border border-red-200 shadow-2xs transition active:scale-95 cursor-pointer flex items-center justify-center"
-                title="Effacer tout"
-              >
-                C (Effacer)
-              </button>
-
-              {/* Zero */}
-              <button
-                type="button"
-                onClick={() => handleNumpadPress('0')}
-                className="h-10 sm:h-11 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-extrabold text-base sm:text-lg border border-slate-200 shadow-2xs transition active:scale-95 active:bg-amber-200 cursor-pointer flex items-center justify-center"
-              >
-                0
-              </button>
-
-              {/* Backspace */}
-              <button
-                type="button"
-                onClick={() => handleNumpadPress('BACKSPACE')}
-                className="h-10 sm:h-11 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs sm:text-sm border border-slate-300 shadow-2xs transition active:scale-95 cursor-pointer flex items-center justify-center"
-                title="Effacer le dernier chiffre"
-              >
-                <Delete className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Quick Additive Steps */}
-            <div className="grid grid-cols-4 gap-1.5 mt-2 pt-2 border-t border-slate-200 text-xs">
-              <button
-                type="button"
-                onClick={() => handleAddPreset(5)}
-                className="py-1.5 rounded-lg bg-white hover:bg-amber-50 text-slate-800 font-bold border border-slate-200 cursor-pointer"
-              >
-                +5
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAddPreset(10)}
-                className="py-1.5 rounded-lg bg-white hover:bg-amber-50 text-slate-800 font-bold border border-slate-200 cursor-pointer"
-              >
-                +10
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAddPreset(24)}
-                className="py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-950 font-black border border-amber-300 cursor-pointer"
-              >
-                +24 (Casier)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleAddPreset(50)}
-                className="py-1.5 rounded-lg bg-white hover:bg-amber-50 text-slate-800 font-bold border border-slate-200 cursor-pointer"
-              >
-                +50
-              </button>
+            {/* Keyboard tips banner */}
+            <div className="text-[11px] text-slate-500 bg-white/80 p-2 rounded-xl border border-slate-200 flex items-center justify-center gap-2">
+              <span>Appuyez sur</span>
+              <kbd className="px-1.5 py-0.5 bg-slate-100 text-slate-800 border border-slate-300 rounded font-mono text-[10px] font-bold">Entrée ↵</kbd>
+              <span>pour valider ou</span>
+              <kbd className="px-1.5 py-0.5 bg-slate-100 text-slate-800 border border-slate-300 rounded font-mono text-[10px] font-bold">Échap</kbd>
+              <span>pour annuler</span>
             </div>
           </div>
 

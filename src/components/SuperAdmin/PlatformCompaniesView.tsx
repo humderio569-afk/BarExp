@@ -66,7 +66,7 @@ export const PlatformCompaniesView: React.FC = () => {
   const [formTaxRate, setFormTaxRate] = useState(0);
   const [formCashierName, setFormCashierName] = useState('Caisse Principale');
   const [formAutoApprove, setFormAutoApprove] = useState(true);
-  const [formAllowCameraScanner, setFormAllowCameraScanner] = useState(true);
+  const [formAllowCameraScanner, setFormAllowCameraScanner] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -118,7 +118,7 @@ export const PlatformCompaniesView: React.FC = () => {
     setFormTaxRate(0);
     setFormCashierName('Caisse Principale');
     setFormAutoApprove(true);
-    setFormAllowCameraScanner(true);
+    setFormAllowCameraScanner(false);
 
     // Reset Subscription with global defaults ($100/yr annual by default)
     setFormPlanType('annual');
@@ -153,7 +153,7 @@ export const PlatformCompaniesView: React.FC = () => {
     setFormTaxRate(comp.taxRate || 0);
     setFormCashierName(comp.cashierName || 'Caisse Principale');
     setFormAutoApprove(comp.autoApprovePreRegistered !== false);
-    setFormAllowCameraScanner(comp.allowCameraScanner ?? false);
+    setFormAllowCameraScanner(comp.allowCameraScanner === true);
 
     // Populate subscription values
     const sub = comp.subscription;

@@ -11,7 +11,8 @@ import {
   FileText,
   AlertTriangle,
   RefreshCw,
-  Package
+  Package,
+  User
 } from 'lucide-react';
 import { StockLog, EnterpriseReportType } from '../../types';
 
@@ -36,10 +37,22 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [period, setPeriod] = useState<PeriodFilter>('all_time');
   const [movementType, setMovementType] = useState<MovementTypeFilter>('all');
+  const [selectedCashier, setSelectedCashier] = useState<string>('all');
   
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const [customStartDate, setCustomStartDate] = useState(todayStr);
   const [customEndDate, setCustomEndDate] = useState(todayStr);
+
+  // Available authors / cashiers in stock logs
+  const availableCashiers = useMemo(() => {
+    const set = new Set<string>();
+    stockLogs.forEach(l => {
+      if (l.recordedBy && l.recordedBy.trim()) {
+        set.add(l.recordedBy.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [stockLogs]);
 
   // Compute active date range
   const { startDate, endDate, periodLabel } = useMemo(() => {
@@ -109,9 +122,13 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
         if (!matchesProduct && !matchesReason) return false;
       }
 
+      if (selectedCashier !== 'all' && log.recordedBy !== selectedCashier) {
+        return false;
+      }
+
       return true;
     }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [stockLogs, startDate, endDate, movementType, searchTerm]);
+  }, [stockLogs, startDate, endDate, movementType, searchTerm, selectedCashier]);
 
   // Aggregated KPIs
   const stats = useMemo(() => {
@@ -265,20 +282,39 @@ export const StockHistoryModal: React.FC<StockHistoryModalProps> = ({
             </div>
           )}
 
-          {/* Search and Movement Type */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Rechercher par article ou motif..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
+          {/* Search, Movement Type and Cashier Filter */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pt-1">
+            <div className="flex items-center gap-2 flex-1">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par article ou motif..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              {availableCashiers.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs shrink-0 shadow-2xs">
+                  <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="font-bold text-slate-500 whitespace-nowrap hidden sm:inline">Membre :</span>
+                  <select
+                    value={selectedCashier}
+                    onChange={(e) => setSelectedCashier(e.target.value)}
+                    className="bg-transparent font-black text-slate-800 focus:outline-none cursor-pointer text-xs max-w-[130px] truncate"
+                  >
+                    <option value="all">Tous ({availableCashiers.length})</option>
+                    {availableCashiers.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center space-x-1 overflow-x-auto pb-1 sm:pb-0">
+            <div className="flex items-center space-x-1 overflow-x-auto pb-1 sm:pb-0 shrink-0">
               {[
                 { id: 'all', label: 'Tous' },
                 { id: 'in', label: 'Entrées (+)' },

@@ -387,7 +387,7 @@ export const CartPanel: React.FC = () => {
                         <Plus className="w-3.5 h-3.5 stroke-[3]" />
                       </button>
 
-                      {/* Fast Numpad / Preset Multiplier Modal Trigger */}
+                      {/* Quantity & Presets Modal Trigger */}
                       <button
                         onClick={() => setEditingQuantityItem({
                           product: item.product,
@@ -395,9 +395,9 @@ export const CartPanel: React.FC = () => {
                           selectedFlavor: item.selectedFlavor
                         })}
                         className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-600 hover:text-amber-800 flex items-center justify-center transition active:scale-90 cursor-pointer ml-0.5 border border-slate-200/80"
-                        title="Ouvrir le pavé tactile / raccourcis casiers"
+                        title="Saisie au clavier / Raccourcis casiers"
                       >
-                        <Calculator className="w-3.5 h-3.5" />
+                        <Keyboard className="w-3.5 h-3.5" />
                       </button>
                     </div>
 

@@ -29,43 +29,62 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const isInstalledOrStandalone = pwaState.isStandalone || pwaState.isInstalled;
 
   const allShortcuts = [
     {
-      key: 'F1',
+      key: 'F1 ou Ctrl + Entrée / Ctrl + P',
       action: 'Valider & Encaisser',
-      desc: 'Ouvre directement le panneau d\'encaissement rapide ou valide la commande en cours.',
+      desc: 'Ouvre directement le panneau d\'encaissement ou valide la commande en cours.',
       badge: 'Caisse POS',
       color: 'bg-emerald-50 text-emerald-800 border-emerald-200'
     },
     {
-      key: 'F2',
+      key: 'F2 ou Ctrl + D / Ctrl + Suppr',
       action: 'Annuler le ticket',
       desc: 'Ouvre la boîte de confirmation pour vider le panier en cours.',
       badge: 'Caisse POS',
       color: 'bg-red-50 text-red-800 border-red-200'
     },
     {
-      key: 'F3 ou Ctrl + K',
-      action: 'Rechercher un produit',
-      desc: 'Active et focalise la barre de recherche instantanée des produits.',
-      badge: 'Navigation',
+      key: 'Entrée (↵)',
+      action: 'Validation / Encaissement direct',
+      desc: 'Valide le montant ou ouvre le paiement lorsque le panier contient des articles.',
+      badge: 'Universel',
       color: 'bg-amber-50 text-amber-800 border-amber-200'
     },
     {
-      key: 'F4 ou B',
+      key: 'F3 ou Ctrl + F / Ctrl + K',
+      action: 'Rechercher un produit',
+      desc: 'Active et focalise la barre de recherche instantanée des boissons.',
+      badge: 'Recherche',
+      color: 'bg-sky-50 text-sky-800 border-sky-200'
+    },
+    {
+      key: 'F4 ou Ctrl + B',
       action: 'Scanner Code-Barres',
-      desc: 'Ouvre instantanément le scanner de codes-barres par caméra / douchète.',
+      desc: 'Ouvre le scanner de codes-barres par caméra / douchète USB.',
       badge: 'Outils',
       color: 'bg-purple-50 text-purple-800 border-purple-200'
     },
     {
-      key: 'F8',
+      key: 'F8 ou Ctrl + S',
       action: 'Garder en Fiche',
-      desc: 'Sauvegarde la commande en cours sur la table/emplacement actif.',
+      desc: 'Met en attente la commande en cours sur la table/emplacement actif.',
       badge: 'Caisse POS',
       color: 'bg-blue-50 text-blue-800 border-blue-200'
     },
@@ -78,15 +97,15 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
     }] : []),
     {
       key: 'Échap (Escape)',
-      action: 'Fermer les fenêtres',
-      desc: 'Ferme la fenêtre active (paiement, scanner, recherche ou modal).',
+      action: 'Fermer les fenêtres / Annuler',
+      desc: 'Ferme la fenêtre active (paiement, scanner, modal quantité, etc.).',
       badge: 'Général',
       color: 'bg-slate-100 text-slate-700 border-slate-200'
     },
     {
-      key: 'Alt + 1 à 6',
+      key: 'Ctrl + 1 à 6 (ou Alt + 1..6)',
       action: 'Changer d\'onglet',
-      desc: 'Navigue rapidement entre Caisse (1), Stock (2), Dépenses (3), Rapports (4), Chat (5), Admin (6).',
+      desc: 'Navigue entre Caisse (1), Stock (2), Dépenses (3), Bilan (4), Dona IA (5), Admin (6).',
       badge: 'Navigation',
       color: 'bg-slate-100 text-slate-800 border-slate-200'
     }
@@ -169,6 +188,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
             </button>
           </div>
         )}
+
+        {/* Laptop Fn Key & Device Keyboard Tip */}
+        <div className="bg-amber-50/80 border border-amber-200 text-amber-950 p-2.5 rounded-2xl mb-3 shrink-0 text-xs flex items-center gap-2.5">
+          <Keyboard className="w-5 h-5 text-amber-700 shrink-0" />
+          <p className="text-[11px] leading-snug">
+            <strong className="font-bold">Astuce Ordinateurs Portables :</strong> Si vos touches F1, F2... règlent le volume ou l'écran, maintenez la touche <kbd className="px-1.5 py-0.2 bg-white border border-amber-300 rounded font-mono font-bold text-[10px]">Fn</kbd> (ex: <kbd className="px-1 py-0.2 bg-white border border-amber-300 rounded font-mono font-bold text-[10px]">Fn + F1</kbd>) ou utilisez simplement les combinaisons universelles avec <kbd className="px-1 py-0.2 bg-white border border-amber-300 rounded font-mono font-bold text-[10px]">Ctrl</kbd> (<kbd className="px-1 py-0.2 bg-white border border-amber-300 rounded font-mono font-bold text-[10px]">Ctrl + Entrée</kbd>, <kbd className="px-1 py-0.2 bg-white border border-amber-300 rounded font-mono font-bold text-[10px]">Ctrl + D</kbd>).
+          </p>
+        </div>
 
         {/* Shortcuts List */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">

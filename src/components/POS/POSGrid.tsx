@@ -27,6 +27,7 @@ import {
   Lock
 } from 'lucide-react';
 import { safeGetItem, safeSetItem } from '../../utils/storage';
+import { showToast } from '../../utils/notificationService';
 
 const DISPLAY_PREFS_STORAGE_KEY = 'barexpress_pos_display_prefs_v1';
 
@@ -47,8 +48,12 @@ export const POSGrid: React.FC = () => {
     currentUser,
   } = useBar();
 
-  // Camera scanner is strictly allowed ONLY if enabled by Super Admin for this company
-  const isCameraScannerAllowed = isSuperAdmin || activeCompany?.allowCameraScanner === true;
+  // Active Company settings verification:
+  // By default, scanner is strictly disabled for all companies.
+  // It can ONLY be activated by the Super Admin for this company.
+  const isCompanyScannerEnabled = useMemo(() => {
+    return activeCompany?.allowCameraScanner === true;
+  }, [activeCompany?.allowCameraScanner]);
 
   // First-time or incomplete name cashier verification
   const isNameIncomplete = useMemo(() => {
@@ -113,6 +118,14 @@ export const POSGrid: React.FC = () => {
     };
 
     const handleScannerShortcut = () => {
+      if (!isCompanyScannerEnabled) {
+        showToast({
+          type: 'info',
+          title: 'Scanner désactivé',
+          message: 'Le scanner de codes-barres est désactivé pour cet établissement. Seul le Super Administrateur peut l\'activer.'
+        });
+        return;
+      }
       setIsBarcodeScannerOpen(true);
     };
 
@@ -123,7 +136,107 @@ export const POSGrid: React.FC = () => {
       window.removeEventListener('barexp:shortcut:search', handleSearchShortcut);
       window.removeEventListener('barexp:shortcut:scanner', handleScannerShortcut);
     };
-  }, []);
+  }, [isCompanyScannerEnabled]);
+
+  // Hardware barcode scanner integration:
+  // Strictly verifies active company settings before attaching listener.
+  // If deactivated by Super Admin, listener is never initialized.
+  useEffect(() => {
+    if (!isCompanyScannerEnabled) return;
+
+    let buffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleHardwareScan = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      // Skip if user is typing in form inputs or if modals are open
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable ||
+        isBarcodeScannerOpen ||
+        flavorProductModal ||
+        quickQuantityProductModal ||
+        isAddProductModalOpen
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      // Hardware scanners transmit characters very rapidly (< 100ms apart)
+      if (now - lastKeyTime > 120) {
+        buffer = '';
+      }
+      lastKeyTime = now;
+
+      if (e.key === 'Enter') {
+        const cleaned = buffer.trim();
+        if (cleaned.length >= 3) {
+          e.preventDefault();
+          buffer = '';
+
+          const found = products.find(
+            p => (p.barcode && p.barcode.toLowerCase() === cleaned.toLowerCase()) ||
+                 p.id.toLowerCase() === cleaned.toLowerCase()
+          );
+
+          if (found) {
+            if (found.stock <= 0) {
+              showToast({
+                type: 'warning',
+                title: 'Rupture de stock',
+                message: `"${found.name}" est en rupture de stock.`
+              });
+            } else if (found.flavors && found.flavors.length > 0) {
+              setFlavorProductModal(found);
+            } else {
+              addToCart(found);
+              showToast({
+                type: 'success',
+                title: 'Produit scanné',
+                message: `"${found.name}" ajouté au panier.`
+              });
+              try {
+                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1800, ctx.currentTime);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.1);
+              } catch (_) {}
+            }
+          } else {
+            showToast({
+              type: 'info',
+              title: 'Code inconnu',
+              message: `Aucun produit correspondant au code "${cleaned}".`
+            });
+          }
+        }
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleHardwareScan);
+    return () => {
+      window.removeEventListener('keydown', handleHardwareScan);
+    };
+  }, [
+    isCompanyScannerEnabled,
+    products,
+    addToCart,
+    isBarcodeScannerOpen,
+    flavorProductModal,
+    quickQuantityProductModal,
+    isAddProductModalOpen,
+  ]);
 
   const handleProductClick = (product: Product) => {
     if (product.stock <= 0) return;
@@ -296,9 +409,9 @@ export const POSGrid: React.FC = () => {
           })}
         </div>
 
-        {/* Actions Toolbar: Scanner (if enabled) + Display Settings */}
+        {/* Actions Toolbar: Scanner (if enabled by Super Admin) + Display Settings */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {isCameraScannerAllowed && (
+          {isCompanyScannerEnabled && (
             <button
               onClick={() => setIsBarcodeScannerOpen(true)}
               className="p-2 sm:px-3 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95 border bg-slate-900 hover:bg-slate-800 text-amber-400 border-slate-800"
@@ -784,11 +897,13 @@ export const POSGrid: React.FC = () => {
         />
       )}
 
-      {/* Barcode Camera Scanner Modal */}
-      <BarcodeScannerModal
-        isOpen={isBarcodeScannerOpen}
-        onClose={() => setIsBarcodeScannerOpen(false)}
-      />
+      {/* Barcode Camera Scanner Modal - strictly mounted only if enabled by Super Admin for active company */}
+      {isCompanyScannerEnabled && (
+        <BarcodeScannerModal
+          isOpen={isBarcodeScannerOpen}
+          onClose={() => setIsBarcodeScannerOpen(false)}
+        />
+      )}
 
       {/* Add Product Modal (accessible directly from empty cash register) */}
       {isAddProductModalOpen && (

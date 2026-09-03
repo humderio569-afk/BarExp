@@ -27,6 +27,7 @@ export const INITIAL_COMPANIES: Company[] = [
     taxRate: 0,
     cashierName: 'Marie Caissière',
     autoApprovePreRegistered: true,
+    allowCameraScanner: false, // Désactivé par défaut pour toutes les entreprises (activable uniquement par le Super Admin)
     subscription: {
       planType: 'annual',
       status: 'active',
@@ -404,6 +405,7 @@ export const INITIAL_SETTINGS: BarSettings = {
   donaAccessMode: 'all',
   customGeminiApiKey: '',
   donaCustomInstructions: 'Mettre l\'accent sur la satisfaction client, l\'ambiance chaleureuse du bar et la valorisation des spécialités locales.',
+  allowCameraScanner: false, // Désactivé par défaut pour tous les établissements (activation exclusive Super Admin)
   platformBilling: {
     defaultAnnualPrice: 100, // 100 USD / an
     defaultMonthlyPrice: 15, // 15 USD / mois

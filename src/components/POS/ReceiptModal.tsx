@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sale } from '../../types';
 import { useBar } from '../../context/BarContext';
 import { Printer, CheckCircle, Download, FileText } from 'lucide-react';
@@ -17,6 +17,20 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ sale, onClose }) => 
   const handlePrint = () => {
     printReceiptIframe(sale, settings);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handlePrint();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [sale, settings, onClose]);
 
   const handleDownloadImage = async () => {
     setDownloading(true);

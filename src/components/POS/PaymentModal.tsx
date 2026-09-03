@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useBar } from '../../context/BarContext';
 import { PaymentMethod, Sale } from '../../types';
-import { Banknote, Smartphone, CreditCard, User, X, Check, Calculator, Printer, AlertTriangle } from 'lucide-react';
+import { Banknote, Smartphone, CreditCard, User, X, Check, Calculator, Printer, AlertTriangle, Keyboard } from 'lucide-react';
+import { registerShortcutHandlers } from '../../hooks/useGlobalKeyboardShortcuts';
 
 interface PaymentModalProps {
   onClose: () => void;
@@ -16,10 +17,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onSuccess }
   const [customerNote, setCustomerNote] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [showMajorConfirm, setShowMajorConfirm] = useState<boolean>(false);
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   const numericPaid = parseFloat(amountPaidInput) || 0;
   const changeDue = Math.max(0, numericPaid - cartTotal);
   const isSufficient = paymentMethod !== 'Espèces' || numericPaid >= cartTotal;
+
+  // Auto-focus and select input on mount
+  useEffect(() => {
+    if (amountInputRef.current) {
+      amountInputRef.current.focus();
+      amountInputRef.current.select();
+    }
+  }, [paymentMethod]);
 
   // Preset cash buttons tailored for Gourdes (G)
   const cashPresets = [
@@ -58,8 +68,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onSuccess }
     executeCheckout();
   };
 
-  // Keyboard Shortcuts inside Payment Modal (Enter or F1 to pay, Escape/F2 to cancel)
+  // Keyboard Shortcuts inside Payment Modal (Enter, F1, Ctrl+Enter to pay; Escape or F2 to cancel)
   useEffect(() => {
+    const unregister = registerShortcutHandlers({
+      onConfirmActiveModal: () => {
+        if (showMajorConfirm) {
+          setShowMajorConfirm(false);
+          executeCheckout();
+        } else if (isSufficient && !isProcessing) {
+          handlePay();
+        }
+      },
+      onCloseActiveModal: () => {
+        if (showMajorConfirm) {
+          setShowMajorConfirm(false);
+        } else {
+          onClose();
+        }
+      }
+    });
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' || e.key === 'F2') {
         e.preventDefault();
@@ -82,9 +110,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onSuccess }
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showMajorConfirm, isSufficient, isProcessing, numericPaid, paymentMethod, cartTotal, activeTable]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      unregister();
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [showMajorConfirm, isSufficient, isProcessing, numericPaid, paymentMethod, cartTotal, activeTable, onClose]);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain animate-fadeIn">
@@ -188,9 +219,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onSuccess }
                 </label>
                 <div className="relative">
                   <input
+                    ref={amountInputRef}
                     type="number"
                     value={amountPaidInput}
                     onChange={(e) => setAmountPaidInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (isSufficient && !isProcessing) {
+                          handlePay();
+                        }
+                      }
+                    }}
                     className="w-full bg-white text-amber-600 font-black text-xl sm:text-2xl px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-300 focus:outline-none focus:border-amber-500 text-right"
                   />
                 </div>

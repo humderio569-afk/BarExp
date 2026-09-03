@@ -15,7 +15,8 @@ import {
   RotateCcw,
   Calendar,
   Wallet,
-  DollarSign
+  DollarSign,
+  User
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -64,18 +65,31 @@ export const ExpenseTracker: React.FC = () => {
   const [filterSearch, setFilterSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [filterPaymentMethod, setFilterPaymentMethod] = useState<string>('All');
+  const [filterRecordedBy, setFilterRecordedBy] = useState<string>('All');
   const [filterDatePreset, setFilterDatePreset] = useState<'all' | 'today' | '7days' | 'month' | 'custom'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
+  // Available authors / cashiers who recorded expenses
+  const availableRecorders = useMemo(() => {
+    const set = new Set<string>();
+    expenses.forEach(e => {
+      if (e.recordedBy && e.recordedBy.trim()) {
+        set.add(e.recordedBy.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [expenses]);
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filterCategory !== 'All') count++;
     if (filterPaymentMethod !== 'All') count++;
+    if (filterRecordedBy !== 'All') count++;
     if (filterDatePreset === 'custom' && (startDate || endDate)) count++;
     return count;
-  }, [filterCategory, filterPaymentMethod, filterDatePreset, startDate, endDate]);
+  }, [filterCategory, filterPaymentMethod, filterRecordedBy, filterDatePreset, startDate, endDate]);
 
   const expenseCategories: Expense['category'][] = [
     'Approvisionnement',
@@ -132,6 +146,11 @@ export const ExpenseTracker: React.FC = () => {
         return false;
       }
 
+      // Recorded By (Cashier/Member) Filter
+      if (filterRecordedBy !== 'All' && expense.recordedBy !== filterRecordedBy) {
+        return false;
+      }
+
       // Search Filter (Description or Supplier)
       if (filterSearch.trim()) {
         const q = filterSearch.toLowerCase();
@@ -158,7 +177,7 @@ export const ExpenseTracker: React.FC = () => {
 
       return true;
     });
-  }, [expenses, filterCategory, filterPaymentMethod, filterSearch, filterDatePreset, startDate, endDate, todayStr]);
+  }, [expenses, filterCategory, filterPaymentMethod, filterRecordedBy, filterSearch, filterDatePreset, startDate, endDate, todayStr]);
 
   const totalFilteredAmount = useMemo(() => {
     return filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -215,6 +234,7 @@ export const ExpenseTracker: React.FC = () => {
     setFilterSearch('');
     setFilterCategory('All');
     setFilterPaymentMethod('All');
+    setFilterRecordedBy('All');
     setFilterDatePreset('all');
     setStartDate('');
     setEndDate('');
@@ -679,15 +699,15 @@ export const ExpenseTracker: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Category & Payment Method Selectors */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {/* Category, Payment Method & Member Selectors */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                       {/* Category Filter */}
                       <div>
                         <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Catégorie</label>
                         <select
                           value={filterCategory}
                           onChange={(e) => setFilterCategory(e.target.value)}
-                          className="w-full py-1.5 px-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                          className="w-full py-1.5 px-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 font-medium text-xs"
                         >
                           <option value="All">Toutes les catégories</option>
                           {expenseCategories.map(cat => (
@@ -702,11 +722,26 @@ export const ExpenseTracker: React.FC = () => {
                         <select
                           value={filterPaymentMethod}
                           onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                          className="w-full py-1.5 px-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                          className="w-full py-1.5 px-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 font-medium text-xs"
                         >
                           <option value="All">Tous les modes</option>
                           {paymentMethods.map(m => (
                             <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* RecordedBy / Cashier Filter */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Par (Caissier / Membre)</label>
+                        <select
+                          value={filterRecordedBy}
+                          onChange={(e) => setFilterRecordedBy(e.target.value)}
+                          className="w-full py-1.5 px-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-amber-500 font-medium text-xs"
+                        >
+                          <option value="All">Tous les membres ({availableRecorders.length})</option>
+                          {availableRecorders.map(r => (
+                            <option key={r} value={r}>{r}</option>
                           ))}
                         </select>
                       </div>
@@ -717,7 +752,7 @@ export const ExpenseTracker: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setFilterDatePreset(filterDatePreset === 'custom' ? 'all' : 'custom')}
-                          className={`w-full py-1.5 px-2.5 rounded-lg font-bold border text-left transition ${
+                          className={`w-full py-1.5 px-2.5 rounded-lg font-bold border text-left transition text-xs ${
                             filterDatePreset === 'custom'
                               ? 'bg-amber-50 border-amber-300 text-amber-800'
                               : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'

@@ -66,12 +66,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     currentUser,
   } = useBar();
 
-  // Super Admin security check: Is camera scanner feature enabled for this enterprise?
-  const isFeatureAllowed = useMemo(() => {
-    if (isSuperAdmin) return true;
-    if (activeCompany?.allowCameraScanner === true) return true;
-    return false;
-  }, [isSuperAdmin, activeCompany]);
+  // Active company setting verification:
+  // By default, scanner is strictly disabled for all companies.
+  // It can ONLY be activated by the Super Admin for this active company.
+  const isCompanyScannerEnabled = useMemo(() => {
+    return activeCompany?.allowCameraScanner === true;
+  }, [activeCompany?.allowCameraScanner]);
 
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
@@ -114,6 +114,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const lastScannedCodeRef = useRef<{ code: string; time: number }>({ code: '', time: 0 });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Auto-close if company scanner gets deactivated
+  useEffect(() => {
+    if (isOpen && !isCompanyScannerEnabled) {
+      onClose();
+    }
+  }, [isOpen, isCompanyScannerEnabled, onClose]);
+
   // Clear states when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
@@ -125,9 +132,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     }
   }, [isOpen]);
 
-  // Retrieve cameras and start scanning when modal is open and feature is authorized
+  // Retrieve cameras and start scanning when modal is open and feature is authorized by Super Admin
   useEffect(() => {
-    if (isOpen && isFeatureAllowed) {
+    if (isOpen && isCompanyScannerEnabled) {
       // Delay initialization slightly to ensure DOM element is mounted
       const timer = setTimeout(() => {
         initCamerasAndStart();
@@ -139,11 +146,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     return () => {
       stopCameraScanner();
     };
-  }, [isOpen, isFeatureAllowed]);
+  }, [isOpen, isCompanyScannerEnabled]);
 
   // Global Hardware Barcode Gun listener (catches fast serial keypresses ending in Enter)
+  // Strictly verifies active company settings before attaching listener
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !isCompanyScannerEnabled) return;
 
     let buffer = '';
     let lastKeyTime = Date.now();
@@ -176,9 +184,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, products]);
+  }, [isOpen, isCompanyScannerEnabled, products]);
 
   const initCamerasAndStart = async () => {
+    // Hardware scanner security verification: verify active company settings before initializing
+    if (!isCompanyScannerEnabled) {
+      setIsInitializing(false);
+      return;
+    }
+
     setIsInitializing(true);
     setCameraError(null);
 
@@ -629,7 +643,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     );
   }, [cart]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isCompanyScannerEnabled) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
@@ -686,42 +700,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           </div>
         </div>
 
-        {/* Security Gate Check */}
-        {!isFeatureAllowed ? (
-          <div className="p-6 sm:p-8 text-center space-y-4 flex-1 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto shadow-inner border border-amber-200">
-              <Lock className="w-8 h-8 text-amber-700" />
-            </div>
-
-            <div className="max-w-md space-y-2">
-              <h4 className="text-lg font-black text-slate-900">
-                Module Scanner Verrouillé par le Super Administrateur
-              </h4>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Le scanner de code-barres par caméra a été désactivé pour cet établissement par la plateforme BarExp.
-              </p>
-            </div>
-
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 max-w-md text-left space-y-2">
-              <div className="flex items-center gap-2 font-bold text-slate-900">
-                <ShieldCheck className="w-4 h-4 text-amber-600" />
-                <span>Comment débloquer cet accès ?</span>
-              </div>
-              <p>
-                Le Super Administrateur peut réactiver l'option <strong>« Scanner Caméra »</strong> dans la fiche de votre entreprise ({activeCompany?.name || 'Votre Établissement'}) sur le tableau de bord Super Admin.
-              </p>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-amber-400 font-black rounded-xl text-xs shadow-md transition cursor-pointer"
-            >
-              Fermer et retourner à la caisse
-            </button>
-          </div>
-        ) : (
-          /* Normal Scanner Body */
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+        {/* Scanner Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
             
             {/* Live Camera Viewport Box */}
             <div className="relative bg-slate-950 rounded-2xl overflow-hidden shadow-inner border border-slate-800 flex flex-col items-center justify-center min-h-[250px] sm:min-h-[290px]">
@@ -1238,7 +1218,6 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             )}
 
           </div>
-        )}
 
         {/* Footer Summary & Close / Finish Button */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">

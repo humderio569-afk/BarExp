@@ -316,7 +316,14 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [companies, setCompanies] = useState<Company[]>(() => {
     try {
       const saved = safeGetItem(STORAGE_KEYS.COMPANIES);
-      return saved ? JSON.parse(saved) : INITIAL_COMPANIES;
+      if (saved) {
+        const parsed = JSON.parse(saved) as Company[];
+        return parsed.map(c => ({
+          ...c,
+          allowCameraScanner: c.allowCameraScanner === true,
+        }));
+      }
+      return INITIAL_COMPANIES;
     } catch {
       return INITIAL_COMPANIES;
     }
@@ -585,6 +592,24 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     prevActiveCompanyIdRef.current = activeCompany?.id || null;
   }, [activeCompany?.id]);
+
+  // Synchronize active company settings into state (ensures scanner status strictly follows active company)
+  useEffect(() => {
+    if (activeCompany) {
+      setSettings(prev => ({
+        ...prev,
+        barName: activeCompany.name || prev.barName,
+        tagline: activeCompany.tagline ?? prev.tagline,
+        address: activeCompany.address ?? prev.address,
+        phone: activeCompany.phone ?? prev.phone,
+        currency: activeCompany.currency || prev.currency,
+        taxRate: activeCompany.taxRate ?? prev.taxRate,
+        cashierName: activeCompany.cashierName || prev.cashierName,
+        companyCode: activeCompany.code || prev.companyCode,
+        allowCameraScanner: activeCompany.allowCameraScanner === true,
+      }));
+    }
+  }, [activeCompany?.id, activeCompany?.allowCameraScanner, activeCompany?.name]);
 
   // Aggregated Platform Stats - Pure real-time consolidation from registered data
   const platformStats: PlatformStats = useMemo(() => {
@@ -2389,7 +2414,13 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           async (snapshot) => {
             QuotaTracker.trackReads(snapshot.docs.length || 1);
             if (!snapshot.empty) {
-              const loadedCompanies = snapshot.docs.map(docSnap => docSnap.data() as Company);
+              const loadedCompanies = snapshot.docs.map(docSnap => {
+                const data = docSnap.data() as Company;
+                return {
+                  ...data,
+                  allowCameraScanner: data.allowCameraScanner === true,
+                };
+              });
               setCompanies(loadedCompanies);
               safeSetItem(STORAGE_KEYS.COMPANIES, JSON.stringify(loadedCompanies));
             } else {
@@ -2759,6 +2790,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             newStock: newQty,
             reason: `Vente #${receiptNum}`,
             timestamp,
+            recordedBy: currentUser?.displayName || settings.cashierName || currentUser?.email?.split('@')[0] || 'Caissier',
           };
           newLogs.push(log);
 
@@ -2948,6 +2980,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       newStock: newProduct.stock,
       reason: 'Création produit / Stock initial',
       timestamp: new Date().toISOString(),
+      recordedBy: currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Gérant',
     };
     setRawStockLogs(prev => [newLog, ...prev]);
     setDoc(doc(db, 'stockLogs', newLog.id), cleanForFirestore(newLog)).catch(err => {
@@ -3085,6 +3118,7 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               newStock,
               reason: `Inventaire ${typeLabel}${match.notes ? ' - ' + match.notes : ''}`,
               timestamp,
+              recordedBy: currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Responsable Inventaire',
             };
             newLogs.push(log);
             setDoc(doc(db, 'stockLogs', log.id), cleanForFirestore(log)).catch(err => {
@@ -3118,11 +3152,13 @@ export const BarProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addExpense = (expenseData: Omit<Expense, 'id'>) => {
     const currentCompId = activeCompany?.id || currentUser?.companyId || 'comp_lmd88412';
     const currentCompCode = activeCompany?.code || currentUser?.companyCode || 'LMD88412';
+    const recorder = expenseData.recordedBy || currentUser?.displayName || settings.cashierName || currentUser?.email?.split('@')[0] || 'Caissier';
     const newExpense: Expense = {
       ...expenseData,
       id: `exp-${Date.now()}`,
       companyId: currentCompId,
       companyCode: currentCompCode,
+      recordedBy: recorder,
     };
     setRawExpenses(prev => [newExpense, ...prev]);
     setDoc(doc(db, 'expenses', newExpense.id), cleanForFirestore(newExpense)).catch(err => {

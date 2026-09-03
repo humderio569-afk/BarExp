@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Product } from '../../types';
 import { 
   X, 
@@ -8,7 +8,7 @@ import {
   TrendingUp, 
   TrendingDown, 
   RotateCcw,
-  Percent
+  Keyboard
 } from 'lucide-react';
 
 interface CustomPriceModalProps {
@@ -32,6 +32,23 @@ export const CustomPriceModal: React.FC<CustomPriceModalProps> = ({
     currentPriceType === 'standard' && currentUnitPrice !== product.price ? 'negotiated' : currentPriceType
   );
   const [priceInput, setPriceInput] = useState<string>(currentUnitPrice.toString());
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const numericPrice = parseFloat(priceInput) || 0;
   const standardPrice = product.price;
@@ -51,16 +68,6 @@ export const CustomPriceModal: React.FC<CustomPriceModalProps> = ({
   const handleResetStandard = () => {
     setPriceInput(standardPrice.toString());
     setSelectedType('standard');
-  };
-
-  const handleKeypad = (val: string) => {
-    if (val === 'C') {
-      setPriceInput('0');
-    } else if (val === 'backspace') {
-      setPriceInput(prev => (prev.length > 1 ? prev.slice(0, -1) : '0'));
-    } else {
-      setPriceInput(prev => (prev === '0' ? val : prev + val));
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -161,6 +168,7 @@ export const CustomPriceModal: React.FC<CustomPriceModalProps> = ({
             </span>
             <div className="flex items-center justify-center space-x-2">
               <input
+                ref={inputRef}
                 type="number"
                 min="0"
                 step="any"
@@ -219,24 +227,11 @@ export const CustomPriceModal: React.FC<CustomPriceModalProps> = ({
             </div>
           </div>
 
-          {/* Touch Numpad */}
-          <div className="grid grid-cols-3 gap-1.5 pt-1">
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'backspace'].map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleKeypad(key)}
-                className={`h-11 rounded-xl font-black text-sm flex items-center justify-center transition active:scale-95 cursor-pointer ${
-                  key === 'C'
-                    ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
-                    : key === 'backspace'
-                    ? 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
-                    : 'bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 text-base'
-                }`}
-              >
-                {key === 'backspace' ? '⌫' : key}
-              </button>
-            ))}
+          {/* Physical Keyboard Notice */}
+          <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-center gap-2">
+            <Keyboard className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Tapez le montant sur votre clavier, puis</span>
+            <kbd className="px-1.5 py-0.5 bg-white text-slate-800 border border-slate-300 rounded font-mono text-[10px] font-bold">Entrée ↵</kbd>
           </div>
 
           {/* Footer Submit */}
@@ -246,7 +241,7 @@ export const CustomPriceModal: React.FC<CustomPriceModalProps> = ({
               onClick={onClose}
               className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition cursor-pointer"
             >
-              Annuler
+              Annuler (Échap)
             </button>
             <button
               type="submit"

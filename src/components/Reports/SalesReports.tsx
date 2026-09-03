@@ -44,7 +44,8 @@ import {
   RotateCcw,
   Eye,
   Scale,
-  Boxes
+  Boxes,
+  User
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -154,6 +155,20 @@ export const SalesReports: React.FC = () => {
   const [txPaymentFilter, setTxPaymentFilter] = useState<string>('all');
   const [selectedSaleDetail, setSelectedSaleDetail] = useState<Sale | null>(null);
 
+  // Cashier filter for reports & finances
+  const [selectedCashier, setSelectedCashier] = useState<string>('all');
+
+  // Available cashiers across sales
+  const availableCashiers = useMemo(() => {
+    const set = new Set<string>();
+    sales.forEach(s => {
+      if (s.cashierName && s.cashierName.trim()) {
+        set.add(s.cashierName.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }, [sales]);
+
   // Modals
   const [showShiftCloseModal, setShowShiftCloseModal] = useState(false);
   const [enterpriseReportType, setEnterpriseReportType] = useState<EnterpriseReportType | null>(null);
@@ -222,9 +237,11 @@ export const SalesReports: React.FC = () => {
     return sales.filter(s => {
       if (s.status === 'cancelled') return false;
       const t = new Date(s.timestamp).getTime();
-      return t >= startDate.getTime() && t <= endDate.getTime();
+      if (t < startDate.getTime() || t > endDate.getTime()) return false;
+      if (selectedCashier !== 'all' && s.cashierName !== selectedCashier) return false;
+      return true;
     });
-  }, [sales, startDate, endDate]);
+  }, [sales, startDate, endDate, selectedCashier]);
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter(e => {
@@ -233,9 +250,11 @@ export const SalesReports: React.FC = () => {
       startDay.setHours(0, 0, 0, 0);
       const endDay = new Date(endDate);
       endDay.setHours(23, 59, 59, 999);
-      return expDate >= startDay.getTime() && expDate <= endDay.getTime();
+      if (expDate < startDay.getTime() || expDate > endDay.getTime()) return false;
+      if (selectedCashier !== 'all' && e.recordedBy && e.recordedBy !== selectedCashier) return false;
+      return true;
     });
-  }, [expenses, startDate, endDate]);
+  }, [expenses, startDate, endDate, selectedCashier]);
 
   // Global KPIs Aggregations
   const totalSalesRevenue = useMemo(() => filteredSales.reduce((sum, s) => sum + s.total, 0), [filteredSales]);
@@ -671,7 +690,25 @@ export const SalesReports: React.FC = () => {
             })}
           </div>
 
-          <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
+          <div className="flex items-center gap-2 self-start lg:self-auto shrink-0 flex-wrap">
+            {/* Cashier Filter */}
+            {availableCashiers.length > 0 && (
+              <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl text-xs shadow-2xs">
+                <User className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span className="font-bold text-slate-500">Caissier :</span>
+                <select
+                  value={selectedCashier}
+                  onChange={(e) => setSelectedCashier(e.target.value)}
+                  className="bg-transparent font-black text-slate-900 focus:outline-none cursor-pointer text-xs"
+                >
+                  <option value="all">Tous ({availableCashiers.length})</option>
+                  {availableCashiers.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {periodPreset === 'year' && (
               <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-xl text-xs">
                 <span className="font-bold text-slate-500">Année :</span>
